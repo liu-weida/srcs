@@ -43,7 +43,8 @@ public class Client implements Sauvegardable {
 		DataOutputStream dos = new DataOutputStream(out);
 
 		dos.writeUTF(nom);
-		dos.writeUTF(compte.getId());
-		dos.writeDouble(compte.getSolde());
+		compte.save(out);
+//		dos.writeUTF(compte.getId());
+//		dos.writeDouble(compte.getSolde());
 	}
 }

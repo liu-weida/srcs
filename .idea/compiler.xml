@@ -2,7 +2,6 @@
 <project version="4">
   <component name="CompilerConfiguration">
     <excludeFromCompile>
-      <file url="file://$PROJECT_DIR$/TME1/ressources/srcs/persistance/test/Banque2Clients2ComptesTest.java" />
       <file url="file://$PROJECT_DIR$/TME1/ressources/srcs/persistance/test/BanqueCompteJoinTest.java" />
     </excludeFromCompile>
   </component>

@@ -41,9 +41,11 @@ public class Banque implements Sauvegardable {
 
 
 	public void save(OutputStream out) throws IOException {
-		DataOutputStream dos = new DataOutputStream(out);
+		//DataOutputStream dos = new DataOutputStream(out);
 
-
+		for (Client c:clients){
+			c.save(out);
+		}
 
 	}
 }
