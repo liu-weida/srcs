@@ -1,9 +1,14 @@
 package srcs.banque;
 
+import srcs.persistance.Sauvegardable;
+
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.util.HashSet;
 import java.util.Set;
 
-public class Banque {
+public class Banque implements Sauvegardable {
 
 	private final Set<Client> clients;
 	
@@ -33,6 +38,12 @@ public class Banque {
 	public boolean addNewClient(Client c) {
 		return clients.add(c);
 	}
-	
 
+
+	public void save(OutputStream out) throws IOException {
+		DataOutputStream dos = new DataOutputStream(out);
+
+
+
+	}
 }
