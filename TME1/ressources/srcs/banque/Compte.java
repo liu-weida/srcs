@@ -54,7 +54,6 @@ public class Compte implements Sauvegardable {
 		DataOutputStream dos = new DataOutputStream(out);
 		dos.writeUTF(id);
 		dos.writeDouble(solde);
-
 	}
 	
 }
