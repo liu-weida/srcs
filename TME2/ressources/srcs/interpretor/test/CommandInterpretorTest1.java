@@ -157,12 +157,12 @@ public class CommandInterpretorTest1 extends AbstractTest{
 	}
 	
 	@Test
-	public void testTypeCommand() throws InvocationTargetException, InstantiationException, IllegalAccessException, NoSuchMethodException {
+	public void testTypeCommand() {
 		CommandInterpretor i = new CommandInterpretor();
 		assertNotNull(i.getClassOf("echo"));
 		assertEquals(Echo.class,i.getClassOf("echo"));
 		assertNotNull(i.getClassOf("cat"));
-		assertEquals(Cat.class,i.getClassOf("cat"));
+		assertEquals(Cat.class,i.getClassOf("cat"));		
 	}
 	
 	

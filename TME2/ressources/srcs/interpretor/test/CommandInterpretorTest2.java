@@ -15,7 +15,7 @@ import java.nio.file.Files;
 
 import org.junit.Test;
 
-import travail.Command;
+import srcs.interpretor.Command;
 import srcs.interpretor.CommandInterpretor;
 import srcs.interpretor.CommandNotFoundException;
 import srcs.interpretor.Echo;
@@ -62,7 +62,7 @@ public class CommandInterpretorTest2 extends AbstractTest{
 				
 		File tmp_dir = Files.createTempDirectory("commands").toFile();
 		produceAndCompileAddCommand(tmp_dir);
-		assertThrows(IllegalArgumentException.class, ()-> i.perform("deploy add "+tmp_dir.getAbsolutePath()+System.currentTimeMillis()+" srcs.Add", streamout));		
+		assertThrows(IllegalArgumentException.class, ()-> i.perform("deploy add "+tmp_dir.getAbsolutePath()+System.currentTimeMillis()+" srcs.Add", streamout));
 		for(int x=0;x<10;x++) {
 			Class<?extends Command> cladd = i.getClassOf("add");
 			assertNull(cladd);
@@ -70,8 +70,8 @@ public class CommandInterpretorTest2 extends AbstractTest{
 			assertThrows(IllegalArgumentException.class, ()-> i.perform("deploy add "+tmp_dir.getAbsolutePath()+" srcs.Add", streamout));
 			cladd = i.getClassOf("add");
 			assertNotNull(cladd);
-			
-			assertNotSame(i.getClassOf("deploy").getClassLoader(),cladd.getClassLoader()); 
+			assertNotSame(i.getClassOf("deploy").getClassLoader(),cladd.getClassLoader());
+
 			i.perform("add "+x+" "+(x+1), streamout);
 			
 			i.perform("undeploy add ", streamout);

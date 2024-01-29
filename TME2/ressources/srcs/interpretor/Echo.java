@@ -1,21 +1,21 @@
 package srcs.interpretor;
 
-import travail.Command;
-
 import java.io.PrintStream;
-import java.util.ArrayList;
 import java.util.List;
 
-public class Echo implements Command {
-    List<String> args;
+public class Echo implements Command{
+    private final List<String> args;
+
     public Echo(List<String> args){
+        if (args == null){
+            throw new IllegalArgumentException("Echo Err : Arguments not exist");
+        }
         this.args = args;
     }
 
     @Override
     public void execute(PrintStream out) {
-        for (String str :args){
-            out.print(str);
-        }
+        args.remove(0);
+        out.print(String.join(" ", args));
     }
 }

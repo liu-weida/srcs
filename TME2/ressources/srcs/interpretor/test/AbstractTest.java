@@ -44,7 +44,7 @@ public abstract class AbstractTest {
 			ps.println("package srcs;");
 			ps.println("import java.util.List;");
 			ps.println("import java.io.PrintStream;");
-			ps.println("import travail.Command;");
+			ps.println("import srcs.interpretor.Command;");
 			ps.println("");
 			ps.println("public class Add implements Command {");
 			ps.println(" private final int a;");

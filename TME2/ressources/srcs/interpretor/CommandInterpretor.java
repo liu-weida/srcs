@@ -1,68 +1,129 @@
 package srcs.interpretor;
 
-import travail.Command;
-
-import java.io.PrintStream;
-import java.lang.reflect.Constructor;
+import java.io.*;
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.util.*;
 
 public class CommandInterpretor {
-    private Map<String, Class<? extends Command>> map = new HashMap<String, Class<? extends Command>>();
+    private Map<String, Class<? extends Command>> map = new HashMap<>();
+    private ClassLoader customClassLoader;
 
     public CommandInterpretor(){
         map.put("cat", Cat.class);
         map.put("echo", Echo.class);
+        map.put("deploy", Deploy.class);
+        map.put("undeploy", Undeploy.class);
+        map.put("save", Save.class);
     }
 
-    public Object getClassOf(String nomCommande) throws InvocationTargetException, InstantiationException, IllegalAccessException, NoSuchMethodException {
-        String test = "class ";
-        String newNomCommande = test + nomCommande;
+    public CommandInterpretor(String fileName) throws IOException, ClassNotFoundException {
+        ObjectInputStream ois = new MyClassLoader(new FileInputStream(fileName));
+        this.map = (Map<String, Class<? extends Command>>) ois.readObject();
+    }
 
-        System.out.println("456" + newNomCommande);
+    public Class<? extends Command> getClassOf(String commandName){
+        // retourne null si la commande n'exsite pas
+        return map.getOrDefault(commandName, null);
+    }
 
-        for (Class<? extends Command> commande : map.values()){
-            if(newNomCommande.equals(commande.toString())) {
+    public void perform(String commandLine, PrintStream out) throws NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
+        // parser la ligne de commande par espace
+        StringTokenizer tokenizer = new StringTokenizer(commandLine, " ");
 
+        // parcourir tous les elements dans le tokenizer et stocker dans une liste de string
+        List<String> wordList = new ArrayList<>();
+        while (tokenizer.hasMoreTokens())
+            wordList.add(tokenizer.nextToken());
 
-                System.out.println("123" + commande);
+        if (! wordList.isEmpty()) {
+            // teste si le premier mot est dans le map de la commande
+            String command = wordList.get(0);
+            if(getClassOf(command) == null)
+                throw new CommandNotFoundException("No such command " + command);
 
-                Class<? extends Command> commandeClass = map.get(commande);
-                Constructor<? extends Command> constructor = commandeClass.getConstructor();
-                return constructor.newInstance();
+            // testez si la class est interne ou pas
+            // cree un object avec la commande correspondant
+            if (! getClassOf(command).isMemberClass()){
+                System.out.println(getClassOf(command).getDeclaredConstructor(List.class));
+                getClassOf(command).getDeclaredConstructor(List.class).newInstance(wordList).execute(out);
+            } else {
+                getClassOf(command)
+                        .getDeclaredConstructor(CommandInterpretor.class, List.class)
+                        .newInstance(CommandInterpretor.this, wordList)
+                        .execute(out);
             }
         }
-
-        System.out.println("123123123");
-        return null;
     }
 
+    public class Deploy implements Command{
+        private List<String> args;
 
-
-    public void perform(String command, PrintStream out) throws InvocationTargetException, InstantiationException, IllegalAccessException, NoSuchMethodException {
-        // Partie 1
-        StringTokenizer tokenizer = new StringTokenizer(command);
-        List<String> words = new ArrayList<>();
-        while (tokenizer.hasMoreTokens()) {
-            words.add(tokenizer.nextToken());
+        public Deploy(List<String> args) throws MalformedURLException {
+            if (args.size() != 4)
+                throw new IllegalArgumentException("Usage deploy : <command> <path> <className>");
+            this.args = args;
         }
 
-        // Partie 2
-        String commande = words.get(0);
-        if ( !map.containsKey(commande) ){
-            throw new CommandNotFoundException();
+        @Override
+        public void execute(PrintStream out) {
+            String cmd = args.get(1);
+            String path = args.get(2);
+            String absoluteName = args.get(3);
+
+            if (map.containsKey(cmd)) throw new IllegalArgumentException(cmd+" already exists");
+            try {
+                URLClassLoader ucl = URLClassLoader.newInstance(new URL[]{new File(path).toURI().toURL()});
+                Class<? extends Command> classe = ucl.loadClass(absoluteName).asSubclass(Command.class);
+                map.put(cmd, classe);
+            } catch (MalformedURLException e) {
+                throw new IllegalArgumentException(path + " not exist");
+            } catch (ClassNotFoundException e) {
+                throw new IllegalArgumentException(absoluteName + " not exist in " + path);
+            }
         }
-
-        // Partie 3
-        Class<? extends Command> classCommand = map.get(commande);
-        String className = classCommand.getName();
-
-
-        Object obj = getClassOf(className);
-        Method m = obj.getClass().getMethod("execute");
-        m.invoke(out);
     }
 
+    public class Undeploy implements Command{
+        private final String commandName;
 
+        public Undeploy(List<String> args){
+            if (args == null){
+                throw new IllegalArgumentException("Usage undeploy : <command>");
+            }
+            this.commandName = args.get(1);
+        }
+
+        @Override
+        public void execute(PrintStream out) {
+            if (map.containsKey(commandName)){
+                map.remove(commandName);
+            }
+            else {
+                throw new IllegalArgumentException("Undepoly Err : Command not found in map");
+            }
+        }
+    }
+
+    public class Save implements Command{
+        private List<String> args;
+
+        public Save(List<String> args){
+            if (args.size() != 2)
+                throw new IllegalArgumentException("usage save : <file>");
+            this.args = args;
+        }
+
+        @Override
+        public void execute(PrintStream out) {
+            try {
+                ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(args.get(1)));
+                oos.writeObject(map);
+            } catch (IOException e) {
+                e.fillInStackTrace();
+            }
+        }
+    }
 }
