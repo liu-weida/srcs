@@ -17,8 +17,8 @@ public class MyClassLoader extends ObjectInputStream {
         try {
             return Class.forName(className);
         } catch (ClassNotFoundException e){
-            String originPath = "/var/folders/5g/nzw_1gz52q76wp0nfc3jlq9c0000gn/T";
-            URLClassLoader ucl = URLClassLoader.newInstance(new URL[]{new File(originPath+"/"+matchFolders(originPath, "commands.*$")).toURI().toURL()});
+            String tempFolderPath = System.getProperty("java.io.tmpdir");
+            URLClassLoader ucl = URLClassLoader.newInstance(new URL[]{new File(tempFolderPath+"/"+matchFolders(tempFolderPath, "commands.*$")).toURI().toURL()});
             return ucl.loadClass(className).asSubclass(Command.class);
         }
     }
