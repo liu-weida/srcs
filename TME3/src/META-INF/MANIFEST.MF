@@ -1,3 +1,3 @@
 Manifest-Version: 1.0
-Main-Class: http.test.test_EX2Q1
+Main-Class: http.test.TestRequestForHello
 

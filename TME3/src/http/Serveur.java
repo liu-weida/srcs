@@ -31,6 +31,12 @@ public class Serveur {
         }
     }
 
+    public int getPort(){
+        return port;
+    }
 
+    public RequestProcessor getProcessor(){
+        return processor;
+    }
 }
 
