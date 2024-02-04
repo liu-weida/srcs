@@ -30,18 +30,5 @@ public class MyClassLoader extends ObjectInputStream {
             return ucl.loadClass(className).asSubclass(Command.class);
         }
     }
-    private static String matchFolders(String folderPath, String regex) {
-        File folder = new File(folderPath);
-        File[] subFolders = folder.listFiles(File::isDirectory);
-        if (subFolders != null) {
-            Pattern pattern = Pattern.compile(regex);
-            for (File subFolder : subFolders) {
-                Matcher matcher = pattern.matcher(subFolder.getName());
-                if (matcher.matches())
-                    return subFolder.getName();
-            }
-        }
-        return null;
-    }
 }
 
