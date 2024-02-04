@@ -3,6 +3,11 @@ package srcs.interpretor;
 import java.io.*;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -17,8 +22,11 @@ public class MyClassLoader extends ObjectInputStream {
         try {
             return Class.forName(className);
         } catch (ClassNotFoundException e){
-            String tempFolderPath = System.getProperty("java.io.tmpdir");
-            URLClassLoader ucl = URLClassLoader.newInstance(new URL[]{new File(tempFolderPath+"/"+matchFolders(tempFolderPath, "commands.*$")).toURI().toURL()});
+            Path filePath = Paths.get(System.getProperty("user.dir")+"/"+className);
+            if (! Files.exists(filePath)) {
+                throw new NoSuchFileException(System.getProperty("user.dir")+"/"+className);
+            }
+            URLClassLoader ucl = URLClassLoader.newInstance(new URL[]{new File(Files.readString(filePath)).toURI().toURL()});
             return ucl.loadClass(className).asSubclass(Command.class);
         }
     }

@@ -5,6 +5,10 @@ import java.lang.reflect.InvocationTargetException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 
 public class CommandInterpretor {
@@ -76,10 +80,17 @@ public class CommandInterpretor {
                 URLClassLoader ucl = URLClassLoader.newInstance(new URL[]{new File(path).toURI().toURL()});
                 Class<? extends Command> classe = ucl.loadClass(absoluteName).asSubclass(Command.class);
                 map.put(cmd, classe);
+                Path filePath = Paths.get(System.getProperty("user.dir")+"/"+absoluteName);
+                if (! Files.exists(filePath)) {
+                    Files.createFile(filePath);
+                }
+                Files.write(filePath, path.getBytes(StandardCharsets.UTF_8));
             } catch (MalformedURLException e) {
                 throw new IllegalArgumentException(path + " not exist");
             } catch (ClassNotFoundException e) {
                 throw new IllegalArgumentException(absoluteName + " not exist in " + path);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
             }
         }
     }
