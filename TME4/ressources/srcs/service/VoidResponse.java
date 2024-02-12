@@ -1,4 +1,6 @@
 package srcs.service;
 
-public class VoidResponse {
+import java.io.Serializable;
+
+public class VoidResponse implements Serializable {
 }

@@ -1,4 +1,4 @@
 package srcs.service;
 
-public class MyProtocolException {
+public class MyProtocolException extends Exception {
 }

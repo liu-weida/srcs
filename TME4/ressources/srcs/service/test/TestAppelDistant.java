@@ -46,14 +46,14 @@ public class TestAppelDistant {
 	public void testCalculatrice() {
 		Calculatrice calc = new CalculatriceProxy("localhost", portcalculette);
 		
-		assertEquals(Integer.valueOf(0), calc.add(4, -4));
-		assertEquals(Integer.valueOf(9), calc.add(4,5));
+		assertEquals(new Integer(0), calc.add(4, -4));
+		assertEquals(new Integer(9), calc.add(4,5));
 		
-		assertEquals(Integer.valueOf(3), calc.sous(4, 1));
-		assertEquals(Integer.valueOf(8), calc.sous(4, -4));
+		assertEquals(new Integer(3), calc.sous(4, 1));
+		assertEquals(new Integer(8), calc.sous(4, -4));
 		
-		assertEquals(Integer.valueOf(12), calc.mult(3, 4));
-		assertEquals(Integer.valueOf(-16), calc.mult(4, -4));
+		assertEquals(new Integer(12), calc.mult(3, 4));
+		assertEquals(new Integer(-16), calc.mult(4, -4));
 		
 		ResDiv res = calc.div(5, 3);
 		assertEquals(1, res.getQuotient());
