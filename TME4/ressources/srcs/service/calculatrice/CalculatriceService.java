@@ -1,9 +1,12 @@
 package srcs.service.calculatrice;
 
+import srcs.service.Service;
+
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+import java.net.Socket;
 
-public class CalculatriceService implements Calculatrice {
+public class CalculatriceService implements Calculatrice , Service {
     @Override
     public int add(int val1, int val2) {
         return val1+val2;
@@ -32,5 +35,10 @@ public class CalculatriceService implements Calculatrice {
         Object resDivInstance = constructor.newInstance(quotient, reste);
 
         return resDivInstance;
+    }
+
+    @Override
+    public void execute(Socket connexion) {
+
     }
 }

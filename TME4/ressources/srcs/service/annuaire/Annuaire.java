@@ -4,8 +4,8 @@ public interface Annuaire {
 
     public String lookup(String name);
 
-    public String bind(String val);
+    public void bind(String name , String val);
 
-    public String unbind(String name);
+    public void unbind(String name);
 
 }
