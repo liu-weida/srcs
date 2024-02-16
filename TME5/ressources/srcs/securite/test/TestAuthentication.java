@@ -281,7 +281,7 @@ public class TestAuthentication {
 
 
 		@Override
-		public byte[] recv() throws IOException{
+		public byte[] recv() throws IOException, ClassNotFoundException {
 			if(!alreadyexpectedreceived) {
 				//on cache ici ce que la victime est cense envoyer pour l'authtentification
 				for(int i=0;i<expectedreceived.size();i++) {

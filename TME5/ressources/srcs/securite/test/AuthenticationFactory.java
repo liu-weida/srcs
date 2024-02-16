@@ -56,12 +56,12 @@ public final class AuthenticationFactory {
 		ps.storePassword(loginclient, passwdclient);
 	}
 		
-	public Authentication newServeurAuthentication(Channel c) throws IOException, GeneralSecurityException {
+	public Authentication newServeurAuthentication(Channel c) throws IOException, GeneralSecurityException, ClassNotFoundException {
 		return new Authentication(c, certif_serveur, kpserveur, ps, ca.getPublicKey());
 	}
 	
-	public Authentication newClientAuthentication(Channel c) throws IOException, GeneralSecurityException {
-		return new Authentication(c, certif_client, kpclient,loginclient, passwdclient, ca.getPublicKey());
+	public Authentication newClientAuthentication(Channel c) throws IOException, GeneralSecurityException, ClassNotFoundException {
+		return new Authentication(c, certif_client, kpclient,ca.getPublicKey(), passwdclient, loginclient);
 	}
 
 	public KeyPair getKpclient() {

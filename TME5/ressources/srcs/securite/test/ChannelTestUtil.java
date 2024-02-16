@@ -42,7 +42,7 @@ public final class ChannelTestUtil {
 	
 	@FunctionalInterface
 	public static  interface ChannelFactory{
-		Channel newChannel(Socket s)throws IOException,GeneralSecurityException;
+		Channel newChannel(Socket s) throws IOException, GeneralSecurityException, ClassNotFoundException;
 	}
 	
 	public static class ChannelModifier extends ChannelDecorator {

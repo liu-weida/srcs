@@ -1,13 +1,17 @@
 package srcs.securite;
 
+import java.io.*;
 import java.security.GeneralSecurityException;
+import java.security.KeyFactory;
 import java.security.PublicKey;
+import java.security.spec.X509EncodedKeySpec;
 
 public class Certif {
 
     private String id;
     private PublicKey clePublic;
     private byte[] signAutoCer;
+
     private String nomAlgoSign;
 
     protected Certif(String id, PublicKey clePublic, byte[] signAutoCer, String nomAlgoSign){
@@ -23,16 +27,21 @@ public class Certif {
 
 
 
-    public String getId() {
+    public String getIdentifier() {
         return id;
     }
 
-    public PublicKey getClePublic() {
+    public PublicKey getPublicKey() {
         return clePublic;
     }
 
-    public byte[] getSignAutoCer() {
+    public byte[] getAuthoritySignature() {
         return signAutoCer;
     }
+
+    public String getNomAlgoSign() {
+        return nomAlgoSign;
+    }
+
 
 }
