@@ -7,7 +7,7 @@ public interface Channel {
 
 	void send(byte[] bytesArray) throws IOException;
 
-	byte[] recv() throws IOException;
+	byte[] recv() throws IOException, ClassNotFoundException;
 	
 	InetAddress getRemoteHost();
 	int getRemotePort();

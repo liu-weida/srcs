@@ -27,8 +27,10 @@ public class PropertiesStoreProxy implements PropertiesStore {
 			byte[] rcv = channel.recv();
 			return new String(rcv);
 			
-		} 
-	}
+		} catch (ClassNotFoundException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
 	@Override
 	public String get(String key) throws IOException {
@@ -40,6 +42,8 @@ public class PropertiesStoreProxy implements PropertiesStore {
 			channel.send(baos.toByteArray());
 			byte[] rcv = channel.recv();
 			return new String(rcv);
-		} 
-	}
+		} catch (ClassNotFoundException e) {
+            throw new RuntimeException(e);
+        }
+    }
 }

@@ -63,7 +63,7 @@ public final class ChannelTestUtil {
 		}
 
 		@Override
-		public byte[] recv() throws IOException{
+		public byte[] recv() throws IOException, ClassNotFoundException {
 			byte[] res = super.recv();
 			return res;
 		}
@@ -138,7 +138,7 @@ public final class ChannelTestUtil {
 		}
 
 		@Override
-		public byte[] recv() throws IOException {
+		public byte[] recv() throws IOException, ClassNotFoundException {
 			byte[] res = super.recv();
 			received.add(Arrays.copyOf(res,res.length));
 			return res;

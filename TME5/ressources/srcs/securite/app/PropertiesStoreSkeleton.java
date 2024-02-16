@@ -53,8 +53,10 @@ public class PropertiesStoreSkeleton {
 		catch(IOException e) {
 			e.printStackTrace();
 			throw e;
-		}
-	}
+		} catch (ClassNotFoundException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
 
 }
