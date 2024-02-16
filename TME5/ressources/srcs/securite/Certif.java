@@ -23,7 +23,6 @@ public class Certif {
 
 
 
-
     public String getId() {
         return id;
     }
