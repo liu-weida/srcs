@@ -32,7 +32,7 @@ public class Certif {
         System.out.println("pub  " + publicKeyAuthority.toString());
         System.out.println("cle  " + clePublic.toString());
 
-        return Objects.equals(publicKeyAuthority.toString(), clePublic.toString());
+        return  return Arrays.equals(publicKeyAuthority.getEncoded(), clePublic.getEncoded());
     }
 
 
