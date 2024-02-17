@@ -5,6 +5,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.InetAddress;
 import java.net.Socket;
+import java.util.Arrays;
 
 //EX1 Q1
 
@@ -21,6 +22,8 @@ public class ChannelBasic implements Channel{
         ObjectOutputStream oos = new ObjectOutputStream(socket.getOutputStream());
         oos.writeObject(bytesArray);
         oos.flush();
+
+        //System.out.println("Sending bytes: " + Arrays.toString(bytesArray));
     }
 
     @Override
@@ -29,6 +32,9 @@ public class ChannelBasic implements Channel{
         ObjectInputStream ois = new ObjectInputStream(socket.getInputStream());
 
             byte[] bytesArray = (byte[]) ois.readObject();
+
+        //System.out.println("Received bytes: " + Arrays.toString(bytesArray));
+
             return bytesArray;
 
     }

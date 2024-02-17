@@ -6,6 +6,7 @@ import java.security.KeyFactory;
 import java.security.KeyPair;
 import java.security.PublicKey;
 import java.security.spec.X509EncodedKeySpec;
+import java.util.Arrays;
 
 public class Authentication {
 
@@ -13,7 +14,9 @@ public class Authentication {
     private Certif localCertif;
     private Certif remoteCertif;
     private KeyPair keyPair;
-    private PublicKey publicKey;
+    private PublicKey publicKeyServer;
+
+    private PublicKey publicKeyClient;
     private PasswordStore passwordStore;
     private String login;
     private String password;
@@ -24,7 +27,7 @@ public class Authentication {
         this.localCertif = certif;
         this.keyPair = keyPair;
         this.passwordStore = passwordStore;
-        this.publicKey = authorityPublicKey;
+        this.publicKeyClient = authorityPublicKey;
 
         authenticateServer();
     }
@@ -34,7 +37,7 @@ public class Authentication {
         this.channel = channel;
         this.localCertif = certif;
         this.keyPair = keyPair;
-        this.publicKey = authorityPublicKey;
+        this.publicKeyServer = authorityPublicKey;
         this.login = login;
         this.password = password;
 
@@ -45,7 +48,7 @@ public class Authentication {
         this.channel = channel;
         this.localCertif = certif;
         this.keyPair = keyPair;
-        this.publicKey = authorityPublicKey;
+        this.publicKeyServer = authorityPublicKey;
         this.login = login;
         this.password = password;
 
@@ -60,9 +63,14 @@ public class Authentication {
             // 接收客户端证书并验证
             byte[] clientCertBytes = channel.recv();
             Certif clientCert = bytesTo(clientCertBytes);
-            if (!clientCert.verify(publicKey)) {
+
+            //System.out.println(localCertif.toString());
+            System.out.println("aaa" + publicKeyClient);
+
+            if (!clientCert.verify(publicKeyClient)) {
                 throw new CertificateCorruptedException("Client certificate verification failed.");
             }
+
             this.remoteCertif = clientCert;
             // 等待接收登录信息并验证
             byte[] loginInfo = channel.recv();
@@ -81,11 +89,18 @@ public class Authentication {
     private void authenticateClient() throws IOException, ClassNotFoundException, GeneralSecurityException {
         try {
             // 发送本地证书
+            //System.out.println("send c:");
             channel.send(toBytes(localCertif));
+
             // 接收服务器端证书并验证
             byte[] serverCertBytes = channel.recv();
+
             Certif serverCert = bytesTo(serverCertBytes);
-            if (!serverCert.verify(publicKey)) {
+
+            //System.out.println(localCertif.toString());
+            System.out.println("aaa"+publicKeyServer);
+
+            if (!serverCert.verify(publicKeyServer)) {
                 throw new CertificateCorruptedException("Server certificate verification failed.");
             }
             this.remoteCertif = serverCert;
@@ -117,27 +132,33 @@ public class Authentication {
     }
 
     // 序列化和反序列化方法
+// 序列化方法
     public static byte[] toBytes(Certif certif) throws IOException {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         DataOutputStream dos = new DataOutputStream(baos);
 
         dos.writeUTF(certif.getIdentifier());
-        dos.write(certif.getPublicKey().getEncoded());
+        byte[] publicKeyBytes = certif.getPublicKey().getEncoded();
+        dos.writeInt(publicKeyBytes.length); // 明确记录公钥的长度
+        dos.write(publicKeyBytes);
         dos.writeInt(certif.getAuthoritySignature().length);
         dos.write(certif.getAuthoritySignature());
         dos.writeUTF(certif.getNomAlgoSign());
 
         dos.flush();
+
         return baos.toByteArray();
     }
 
+    // 反序列化方法
     public static Certif bytesTo(byte[] data) throws IOException, GeneralSecurityException {
         ByteArrayInputStream bais = new ByteArrayInputStream(data);
         DataInputStream dis = new DataInputStream(bais);
 
         String id = dis.readUTF();
-        byte[] publicKeyBytes = new byte[dis.available() - Integer.BYTES];
-        dis.readFully(publicKeyBytes);
+        int publicKeyLength = dis.readInt(); // 读取公钥的长度
+        byte[] publicKeyBytes = new byte[publicKeyLength];
+        dis.readFully(publicKeyBytes); // 根据记录的长度读取公钥
         int signLength = dis.readInt();
         byte[] signAutoCer = new byte[signLength];
         dis.readFully(signAutoCer);
@@ -145,6 +166,11 @@ public class Authentication {
 
         PublicKey publicKey = KeyFactory.getInstance("RSA").generatePublic(new X509EncodedKeySpec(publicKeyBytes));
 
-        return new Certif(id, publicKey, signAutoCer, nomAlgoSign);
+        Certif cer = new Certif(id, publicKey, signAutoCer, nomAlgoSign);
+
+       // System.out.println(cer.toString());
+
+        return cer;
     }
+
 }
