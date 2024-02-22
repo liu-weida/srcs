@@ -124,6 +124,12 @@ public class TestAuthentication {
 		Cipher cipher = Cipher.getInstance(ChannelTestUtil.ALGOKEY_A);
 		//on s'assure que le passwd du client ne passe pas en clair sur le réseau
 		for(byte[] mess : snifferclient.getSent()) {
+
+			System.out.println(mess.toString() +"123");
+			System.out.println(authfact.getPasswdclient().getBytes().toString() +"123");
+
+			System.out.println(included(mess,authfact.getPasswdclient().getBytes()));
+
 			assertFalse(included(mess,authfact.getPasswdclient().getBytes()));
 			cipher.init(Cipher.DECRYPT_MODE,authfact.getKpserveur().getPublic());
 			//on verifie que c'est aussi le cas en dechiffrant avec une cle publique

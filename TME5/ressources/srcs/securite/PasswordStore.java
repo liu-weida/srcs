@@ -7,7 +7,8 @@ import java.util.Map;
 
 public class PasswordStore {
     private final String nomAlgoHash;
-    private Map<String, String> passwordStore = new HashMap<>();
+    static Map<String, String> passwordStore = new HashMap<>();
+
 
     public PasswordStore(String nomAlgoHash) {
         this.nomAlgoHash = nomAlgoHash;
@@ -16,6 +17,7 @@ public class PasswordStore {
     public void storePassword(String user, String passwd) throws NoSuchAlgorithmException {
         String hashedPassword = toHash(passwd);
         passwordStore.put(user, hashedPassword);
+
     }
 
     public boolean checkPassword(String user, String passwd) throws NoSuchAlgorithmException {
@@ -23,13 +25,21 @@ public class PasswordStore {
         return hashedPassword.equals(passwordStore.get(user));
     }
 
-    private String toHash(String password) throws NoSuchAlgorithmException {
+    public boolean checkPassword2(String user, String passwd) throws NoSuchAlgorithmException {
+        String password = passwordStore.get(user);
+
+        System.out.println(password +"        3");
+
+        return password.equals(passwd);
+    }
+
+    String toHash(String password) throws NoSuchAlgorithmException {
         MessageDigest messageDigest = MessageDigest.getInstance(nomAlgoHash);
         byte[] hash = messageDigest.digest(password.getBytes());
         return hashToHex(hash);
     }
 
-    private String hashToHex(byte[] hash) {
+    String hashToHex(byte[] hash) {
         StringBuilder hexString = new StringBuilder();
         for (byte b : hash) {
             String hex = Integer.toHexString(0xff & b);
@@ -38,4 +48,11 @@ public class PasswordStore {
         }
         return hexString.toString();
     }
+
+    public void printAllPasswords() {
+        for (Map.Entry<String, String> entry : passwordStore.entrySet()) {
+            System.out.println("User: " + entry.getKey() + ", Password Hash: " + entry.getValue());
+        }
+    }
+
 }
