@@ -2,8 +2,11 @@ package srcs.securite;
 
 import java.io.*;
 import java.security.*;
+import java.security.cert.CertificateException;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.Arrays;
+import java.util.concurrent.ConcurrentHashMap;
+
 
 
 public class Authentication {
@@ -19,6 +22,10 @@ public class Authentication {
     private String login;
     private String password;
 
+    private static ConcurrentHashMap<String, Boolean> processedRequestsServer = new ConcurrentHashMap<>();
+    private static ConcurrentHashMap<String, Boolean> processedRequestsClient = new ConcurrentHashMap<>();
+
+
     // 服务器构造函数
     public Authentication(Channel channel, Certif certif, KeyPair keyPair, PasswordStore passwordStore, PublicKey authorityPublicKey) throws IOException, GeneralSecurityException, ClassNotFoundException {
         this.channel = channel;
@@ -31,7 +38,7 @@ public class Authentication {
     }
 
     // 客户端构造函数
-    public Authentication(Channel channel, Certif certif, KeyPair keyPair, String login, String password, PublicKey authorityPublicKey) throws IOException, GeneralSecurityException, ClassNotFoundException {
+    public Authentication(Channel channel, Certif certif, KeyPair keyPair, String password, String login, PublicKey authorityPublicKey) throws IOException, GeneralSecurityException, ClassNotFoundException {
         this.channel = channel;
         this.localCertif = certif;
         this.keyPair = keyPair;
@@ -42,7 +49,7 @@ public class Authentication {
         authenticateClient();
     }
 
-    public Authentication(Channel channel, Certif certif, KeyPair keyPair, PublicKey authorityPublicKey, String login, String password) throws IOException, GeneralSecurityException, ClassNotFoundException {
+    public Authentication(Channel channel, Certif certif, KeyPair keyPair, PublicKey authorityPublicKey,String password ,String login) throws IOException, GeneralSecurityException, ClassNotFoundException {
         this.channel = channel;
         this.localCertif = certif;
         this.keyPair = keyPair;
@@ -55,25 +62,44 @@ public class Authentication {
 
     //server
     private void authenticateServer() throws IOException, ClassNotFoundException, GeneralSecurityException {
-        try {
+
             // 发送本地证书
             channel.send(toBytes(localCertif));
-            channel.send(generateCertificateHash(localCertif));
 
-            // 接收客户端证书并验证
+        try {
+            channel.send(generateCertificateHash(localCertif));
+        } catch (Exception ex) {
+            throw new RuntimeException(ex);
+        }
+
+        // 接收客户端证书并验证
             byte[] clientCertBytes = channel.recv();
             byte[] clientCertBytesHash = channel.recv();
+
+        String requestIdentifier = Arrays.toString(clientCertBytesHash);
+        if (processedRequestsServer.putIfAbsent(requestIdentifier, true) != null) {
+            throw new AuthenticationFailedException("Detected replay attack to server.");
+        }
 
             Certif clientCert = bytesTo(clientCertBytes);
 
 
+        try {
             if (!compareCertificateHash(clientCertBytesHash,generateCertificateHash(clientCert))){
                 throw new CertificateCorruptedException("The certificate is damaged.");
             }
+        } catch (Exception ex) {
+            throw new RuntimeException(ex);
+        }
 
-            if (!clientCert.verify(publicKeyClient)) {
-                throw new AuthenticationFailedException("Client certificate verification failed.");
+        try {
+                if (!clientCert.verify(publicKeyClient)) {
+                    throw new CertificateCorruptedException("Client certificate verification failed.");
+                }
+            }catch (CertificateCorruptedException e){
+                throw new CertificateCorruptedException("Client certificate is corrupted.", e);
             }
+
 
 
             this.remoteCertif = clientCert;
@@ -88,39 +114,50 @@ public class Authentication {
 
             String password = passwordStore.hashToHex(encryptedPassword);
 
+            passwordStore.printAllPasswords();
+
             if (passwordStore.checkPassword2(login,password)) {
                 throw new AuthenticationFailedException("Password verification failed.");
             }
 
-        } catch (EOFException e) {
-            System.err.println("Connection closed unexpectedly: " + e.getMessage());
-            throw new IOException("Connection closed unexpectedly.", e);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+
     }
 
 
     //client
     private void authenticateClient() throws IOException, ClassNotFoundException, GeneralSecurityException {
-        try {
+
             // 发送本地证书
             //System.out.println("send c:");
             channel.send(toBytes(localCertif));
+        try {
             channel.send(generateCertificateHash(localCertif));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
 
-            // 接收服务器端证书并验证
+        // 接收服务器端证书并验证
             byte[] serverCertBytes = channel.recv();
             byte[] serverCertBytesHash = channel.recv();
+
+        String requestIdentifier = Arrays.toString(serverCertBytesHash);
+        if (processedRequestsClient.putIfAbsent(requestIdentifier, true) != null) {
+            throw new AuthenticationFailedException("Detected replay attack to server.");
+        }
+
 
             Certif serverCert = bytesTo(serverCertBytes);
 
 
+        try {
             if (!compareCertificateHash(serverCertBytesHash,generateCertificateHash(serverCert))){
                 throw new CertificateCorruptedException("The certificate is damaged.");
             }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
 
-            if (!serverCert.verify(publicKeyServer)) {
+        if (!serverCert.verify(publicKeyServer)) {
                 throw new AuthenticationFailedException("Server certificate verification failed.");
             }
             this.remoteCertif = serverCert;
@@ -130,8 +167,9 @@ public class Authentication {
             // 使用PasswordStore加密登录信息
             PasswordStore passwordStore = new PasswordStore("SHA");
 
-            passwordStore.storePassword(login,password);
+            //passwordStore.storePassword(login,password);
 
+            passwordStore.printAllPasswords();
 
             byte[] encryptedLogin = login.getBytes();
             byte[] encryptedPassword = passwordStore.toHash(this.password).getBytes();
@@ -140,12 +178,6 @@ public class Authentication {
             channel.send(encryptedLogin);
             channel.send(encryptedPassword);
 
-        } catch (EOFException e) {
-            System.err.println("Connection closed unexpectedly: " + e.getMessage());
-            throw new IOException("Connection closed unexpectedly.", e);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
     }
 
     // 示例加密登录信息方法，需要根据实际情况实现

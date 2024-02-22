@@ -34,7 +34,7 @@ public final class AuthenticationFactory {
 	
 //	kpclient = Util.generateNewKeyPair(ALGOKEY_A,SIZEKEY_A);
 //	kpserveur = Util.generateNewKeyPair(ALGOKEY_A,SIZEKEY_A);
-//			
+//
 //	CertificationAuthority ca = new CertificationAuthority(ALGOKEY_A,SIZEKEY_A, ALGOSIGN);
 //	Certif certif_client  = ca.declarePublicKey(IDCLIENT, kpclient.getPublic());
 //	Certif certif_serveur = ca.declarePublicKey(IDSERVER, kpserveur.getPublic());

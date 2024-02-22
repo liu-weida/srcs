@@ -25,10 +25,15 @@ public class PasswordStore {
         return hashedPassword.equals(passwordStore.get(user));
     }
 
-    public boolean checkPassword2(String user, String passwd) throws NoSuchAlgorithmException {
+    public boolean checkPassword2(String user, String passwd) throws NoSuchAlgorithmException, AuthenticationFailedException {
+
+
         String password = passwordStore.get(user);
 
-        System.out.println(password +"        3");
+        if (password == null){
+            throw new AuthenticationFailedException("No password was entered.");
+        }
+        //System.out.println(password +"        3");
 
         return password.equals(passwd);
     }

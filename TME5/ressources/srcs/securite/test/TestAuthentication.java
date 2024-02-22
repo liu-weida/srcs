@@ -15,6 +15,7 @@ import java.security.KeyPair;
 import java.security.PublicKey;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 
 import javax.crypto.Cipher;
 
@@ -45,6 +46,8 @@ public class TestAuthentication {
 	private ChannelSniffer snifferserveur;
 	private AuthenticationFactory authfact;
 	private RetourTest ret;
+
+
 
 	@Before
 	public void first() throws Exception {
@@ -125,8 +128,8 @@ public class TestAuthentication {
 		//on s'assure que le passwd du client ne passe pas en clair sur le réseau
 		for(byte[] mess : snifferclient.getSent()) {
 
-			System.out.println(mess.toString() +"123");
-			System.out.println(authfact.getPasswdclient().getBytes().toString() +"123");
+			System.out.println(mess +"123");
+			System.out.println(authfact.getPasswdclient().getBytes() +"123");
 
 			System.out.println(included(mess,authfact.getPasswdclient().getBytes()));
 
