@@ -1,12 +1,10 @@
 package srcs.securite;
 
 import java.io.*;
-import java.security.GeneralSecurityException;
-import java.security.KeyFactory;
-import java.security.KeyPair;
-import java.security.PublicKey;
+import java.security.*;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.Arrays;
+
 
 public class Authentication {
 
@@ -60,27 +58,45 @@ public class Authentication {
         try {
             // 发送本地证书
             channel.send(toBytes(localCertif));
+            channel.send(generateCertificateHash(localCertif));
+
             // 接收客户端证书并验证
             byte[] clientCertBytes = channel.recv();
+            byte[] clientCertBytesHash = channel.recv();
+
             Certif clientCert = bytesTo(clientCertBytes);
 
-            //System.out.println(localCertif.toString());
-            System.out.println("aaa" + publicKeyClient);
+
+            if (!compareCertificateHash(clientCertBytesHash,generateCertificateHash(clientCert))){
+                throw new CertificateCorruptedException("The certificate is damaged.");
+            }
 
             if (!clientCert.verify(publicKeyClient)) {
-                throw new CertificateCorruptedException("Client certificate verification failed.");
+                throw new AuthenticationFailedException("Client certificate verification failed.");
             }
 
+
             this.remoteCertif = clientCert;
-            // 等待接收登录信息并验证
-            byte[] loginInfo = channel.recv();
-            // 此处应有解密登录信息的逻辑
-            if (!passwordStore.checkPassword(login, new String(loginInfo))) {
+
+
+//            // 接收加密的登录信息
+            byte[] encryptedLogin = channel.recv();
+            byte[] encryptedPassword = channel.recv();
+
+
+            String login = new String(encryptedLogin);
+
+            String password = passwordStore.hashToHex(encryptedPassword);
+
+            if (passwordStore.checkPassword2(login,password)) {
                 throw new AuthenticationFailedException("Password verification failed.");
             }
+
         } catch (EOFException e) {
             System.err.println("Connection closed unexpectedly: " + e.getMessage());
             throw new IOException("Connection closed unexpectedly.", e);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
     }
 
@@ -91,32 +107,52 @@ public class Authentication {
             // 发送本地证书
             //System.out.println("send c:");
             channel.send(toBytes(localCertif));
+            channel.send(generateCertificateHash(localCertif));
 
             // 接收服务器端证书并验证
             byte[] serverCertBytes = channel.recv();
+            byte[] serverCertBytesHash = channel.recv();
 
             Certif serverCert = bytesTo(serverCertBytes);
 
-            //System.out.println(localCertif.toString());
-            System.out.println("aaa"+publicKeyServer);
+
+            if (!compareCertificateHash(serverCertBytesHash,generateCertificateHash(serverCert))){
+                throw new CertificateCorruptedException("The certificate is damaged.");
+            }
 
             if (!serverCert.verify(publicKeyServer)) {
-                throw new CertificateCorruptedException("Server certificate verification failed.");
+                throw new AuthenticationFailedException("Server certificate verification failed.");
             }
             this.remoteCertif = serverCert;
+
+
+
+            // 使用PasswordStore加密登录信息
+            PasswordStore passwordStore = new PasswordStore("SHA");
+
+            passwordStore.storePassword(login,password);
+
+
+            byte[] encryptedLogin = login.getBytes();
+            byte[] encryptedPassword = passwordStore.toHash(this.password).getBytes();
+
             // 发送加密的登录信息
-            channel.send(encryptLoginInfo(login, password));
+            channel.send(encryptedLogin);
+            channel.send(encryptedPassword);
+
         } catch (EOFException e) {
             System.err.println("Connection closed unexpectedly: " + e.getMessage());
             throw new IOException("Connection closed unexpectedly.", e);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
     }
 
     // 示例加密登录信息方法，需要根据实际情况实现
-    private byte[] encryptLoginInfo(String login, String password) {
-        // 实现加密逻辑
-        return new byte[0]; // 示例返回值
-    }
+//    private byte[] encryptLoginInfo(String login, String password) {
+//        // 实现加密逻辑
+//        return new byte[0]; // 示例返回值
+//    }
 
     // Getter 方法
     public Certif getLocalCertif() {
@@ -172,5 +208,16 @@ public class Authentication {
 
         return cer;
     }
+
+    public static byte[] generateCertificateHash(Certif certif) throws Exception {
+        MessageDigest digest = MessageDigest.getInstance("SHA-256");
+        byte[] certBytes = toBytes(certif);
+        return digest.digest(certBytes);
+    }
+
+    public static boolean compareCertificateHash(byte[] hash1, byte[] hash2) {
+        return Arrays.equals(hash1, hash2);
+    }
+
 
 }
