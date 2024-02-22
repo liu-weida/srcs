@@ -6,7 +6,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class PasswordStore {
-
     private final String nomAlgoHash;
     private Map<String, String> passwordStore = new HashMap<>();
 

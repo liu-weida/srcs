@@ -5,18 +5,14 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class CertificationAuthority {
+    private final String signAlgo;
+    private final KeyPair keyPair;
+    private final Map<String, Certif> certifMap;
 
-    private final String nomAlgoAsy;
-    private final int tailleCle;
-    private final String nomAlgoSign;
-    private KeyPair keyPair;
-    private Map<String, Certif> certifs = new HashMap<>();
-
-    public CertificationAuthority(String encryptionAlgorithm, int keySize, String signatureAlgorithm) throws NoSuchAlgorithmException {
-        this.nomAlgoAsy = encryptionAlgorithm;
-        this.tailleCle = keySize;
-        this.nomAlgoSign = signatureAlgorithm;
-        this.keyPair = Util.generateNewKeyPair(encryptionAlgorithm, keySize);
+    public CertificationAuthority(String encryptAlgo, int keySize, String signAlgo) throws NoSuchAlgorithmException {
+        this.signAlgo = signAlgo;
+        keyPair = Util.generateNewKeyPair(encryptAlgo, keySize);
+        certifMap = new HashMap<>();
     }
 
     public PublicKey getPublicKey() {
@@ -24,21 +20,18 @@ public class CertificationAuthority {
     }
 
     public Certif getCertificate(String identifier) {
-        return certifs.get(identifier);
+        return certifMap.get(identifier);
     }
 
     public Certif declarePublicKey(String identifier, PublicKey pubk) throws GeneralSecurityException {
-        if (certifs.containsKey(identifier)) {
+        if (certifMap.containsKey(identifier)) {
             throw new GeneralSecurityException("Already exists.");
         }
 
-        Signature signature = Signature.getInstance(nomAlgoSign);
+        Signature signature = Signature.getInstance(signAlgo);
         signature.initSign(keyPair.getPrivate());
         signature.update(pubk.getEncoded());
-        byte[] sign = signature.sign();
-
-        Certif cert = new Certif(identifier, pubk, sign, nomAlgoSign);
-        certifs.put(identifier, cert);
-        return cert;
+        certifMap.put(identifier, new Certif(identifier, pubk, signature.sign(), signAlgo));
+        return getCertificate(identifier);
     }
 }

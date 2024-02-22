@@ -1,18 +1,15 @@
 package srcs.securite;
 
-import srcs.securite.Channel;
-
 import java.io.IOException;
 import java.net.InetAddress;
 
 public class ChannelDecorator implements Channel {
-
-    private Channel channel;
+    private final Channel channel;
 
     public ChannelDecorator(Channel channel){
         this.channel = channel;
-
     }
+
     @Override
     public void send(byte[] bytesArray) throws IOException {
         channel.send(bytesArray);

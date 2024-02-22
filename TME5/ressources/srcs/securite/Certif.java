@@ -1,43 +1,31 @@
 package srcs.securite;
 
-import java.io.*;
-import java.nio.charset.StandardCharsets;
-import java.security.GeneralSecurityException;
-import java.security.KeyFactory;
-import java.security.PublicKey;
-import java.security.Signature;
-import java.security.spec.X509EncodedKeySpec;
-import java.util.Arrays;
-import java.util.Objects;
+import java.io.Serializable;
+import java.security.*;
 
-public class Certif {
-
-    private String id;
-    private PublicKey clePublic;
-    private byte[] signAutoCer;
-
-    private String nomAlgoSign;
+public class Certif implements Serializable {
+    private final String id;
+    private final PublicKey clePublic;
+    private final byte[] signAutoCer;
+    private final String nomAlgoSign;
 
     protected Certif(String id, PublicKey clePublic, byte[] signAutoCer, String nomAlgoSign){
         this.id = id;
-        this.clePublic = clePublic;
         this.signAutoCer = signAutoCer;
+        this.clePublic = clePublic;
         this.nomAlgoSign = nomAlgoSign;
     }
 
-
-
-    public boolean verify(PublicKey publicKeyAuthority) throws GeneralSecurityException {
-
-        System.out.println("pub  " + publicKeyAuthority.toString());
-        System.out.println("cle  " + clePublic.toString());
-
-        return  return Arrays.equals(publicKeyAuthority.getEncoded(), clePublic.getEncoded());
+    public boolean verify(PublicKey publicKeyAuthority) {
+        try {
+            Signature signature = Signature.getInstance(nomAlgoSign);
+            signature.initVerify(publicKeyAuthority);
+            signature.update(clePublic.getEncoded());
+            return signature.verify(signAutoCer);
+        } catch (NoSuchAlgorithmException | InvalidKeyException | SignatureException e) {
+            throw new RuntimeException(e);
+        }
     }
-
-
-
-
 
     public String getIdentifier() {
         return id;
@@ -53,16 +41,5 @@ public class Certif {
 
     public String getNomAlgoSign() {
         return nomAlgoSign;
-    }
-
-
-    @Override
-    public String toString() {
-        return "Certif{" +
-                "id='" + id + '\'' +
-                ", clePublic=" + clePublic +
-                ", signAutoCer=" + Arrays.toString(signAutoCer) +
-                ", nomAlgoSign='" + nomAlgoSign + '\'' +
-                '}';
     }
 }

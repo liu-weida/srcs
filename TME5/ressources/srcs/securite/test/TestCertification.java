@@ -83,21 +83,20 @@ public class TestCertification {
 		assertFalse(certif2.verify(kp2.getPublic()));
 		assertTrue(certif1.verify(ca.getPublicKey()));
 		assertTrue(certif2.verify(ca.getPublicKey()));
-				
-		
 		
 		KeyPair kppirat = Util.generateNewKeyPair(ALGOKEY_A, SIZEKEY_A);
 		List<Field> fields =  ChannelTestUtil.getFields(certif1.getClass(), PublicKey.class);
 		//une seule cle publique attendue en attribut
 		assertEquals(1,fields.size());
-	
-		
+
+
+
 		//verifier qu'un certificat corrompue est detectable
 		Field f_pubk = fields.get(0);
 		f_pubk.setAccessible(true);
 		f_pubk.set(certif1, kppirat.getPublic());
 		f_pubk.setAccessible(false);
-				
+
 		assertFalse(certif1.verify(ca.getPublicKey()));
 		assertFalse(certif1.verify(kp1.getPublic()));
 		assertFalse(certif1.verify(kp2.getPublic()));

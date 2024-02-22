@@ -5,13 +5,10 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.InetAddress;
 import java.net.Socket;
-import java.util.Arrays;
 
 //EX1 Q1
-
 public class ChannelBasic implements Channel{
-
-    Socket socket;
+    private final Socket socket;
 
     public ChannelBasic(Socket socket){
         this.socket = socket;
@@ -22,21 +19,13 @@ public class ChannelBasic implements Channel{
         ObjectOutputStream oos = new ObjectOutputStream(socket.getOutputStream());
         oos.writeObject(bytesArray);
         oos.flush();
-
-        //System.out.println("Sending bytes: " + Arrays.toString(bytesArray));
     }
 
     @Override
     public byte[] recv() throws IOException, ClassNotFoundException {
-
         ObjectInputStream ois = new ObjectInputStream(socket.getInputStream());
-
-            byte[] bytesArray = (byte[]) ois.readObject();
-
-        //System.out.println("Received bytes: " + Arrays.toString(bytesArray));
-
-            return bytesArray;
-
+        byte[] bytesArray = (byte[]) ois.readObject();
+        return bytesArray;
     }
 
     @Override
