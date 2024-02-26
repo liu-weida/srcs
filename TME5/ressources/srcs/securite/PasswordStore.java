@@ -54,10 +54,6 @@ public class PasswordStore {
         return hexString.toString();
     }
 
-    public void printAllPasswords() {
-        for (Map.Entry<String, String> entry : passwordStore.entrySet()) {
-            System.out.println("User: " + entry.getKey() + ", Password Hash: " + entry.getValue());
-        }
-    }
+
 
 }

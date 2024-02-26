@@ -1,7 +1,12 @@
 package srcs.securite;
 
+import javax.crypto.BadPaddingException;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
 import java.io.IOException;
 import java.net.InetAddress;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
 
 public class ChannelDecorator implements Channel {
     private final Channel channel;
@@ -11,12 +16,12 @@ public class ChannelDecorator implements Channel {
     }
 
     @Override
-    public void send(byte[] bytesArray) throws IOException {
+    public void send(byte[] bytesArray) throws IOException{
         channel.send(bytesArray);
     }
 
     @Override
-    public byte[] recv() throws IOException, ClassNotFoundException {
+    public byte[] recv() throws IOException, ClassNotFoundException{
         return channel.recv();
     }
 

@@ -26,7 +26,7 @@ public class Authentication {
     private static ConcurrentHashMap<String, Boolean> processedRequestsClient = new ConcurrentHashMap<>();
 
 
-    // 服务器构造函数
+
     public Authentication(Channel channel, Certif certif, KeyPair keyPair, PasswordStore passwordStore, PublicKey authorityPublicKey) throws IOException, GeneralSecurityException, ClassNotFoundException {
         this.channel = channel;
         this.localCertif = certif;
@@ -37,7 +37,7 @@ public class Authentication {
         authenticateServer();
     }
 
-    // 客户端构造函数
+
     public Authentication(Channel channel, Certif certif, KeyPair keyPair, String password, String login, PublicKey authorityPublicKey) throws IOException, GeneralSecurityException, ClassNotFoundException {
         this.channel = channel;
         this.localCertif = certif;
@@ -63,7 +63,7 @@ public class Authentication {
     //server
     private void authenticateServer() throws IOException, ClassNotFoundException, GeneralSecurityException {
 
-            // 发送本地证书
+
             channel.send(toBytes(localCertif));
 
         try {
@@ -72,7 +72,7 @@ public class Authentication {
             throw new RuntimeException(ex);
         }
 
-        // 接收客户端证书并验证
+
             byte[] clientCertBytes = channel.recv();
             byte[] clientCertBytesHash = channel.recv();
 
@@ -105,7 +105,7 @@ public class Authentication {
             this.remoteCertif = clientCert;
 
 
-//            // 接收加密的登录信息
+
             byte[] encryptedLogin = channel.recv();
             byte[] encryptedPassword = channel.recv();
 
@@ -114,7 +114,6 @@ public class Authentication {
 
             String password = passwordStore.hashToHex(encryptedPassword);
 
-            passwordStore.printAllPasswords();
 
             if (passwordStore.checkPassword2(login,password)) {
                 throw new AuthenticationFailedException("Password verification failed.");
@@ -127,7 +126,7 @@ public class Authentication {
     //client
     private void authenticateClient() throws IOException, ClassNotFoundException, GeneralSecurityException {
 
-            // 发送本地证书
+
             //System.out.println("send c:");
             channel.send(toBytes(localCertif));
         try {
@@ -136,7 +135,7 @@ public class Authentication {
             throw new RuntimeException(e);
         }
 
-        // 接收服务器端证书并验证
+
             byte[] serverCertBytes = channel.recv();
             byte[] serverCertBytesHash = channel.recv();
 
@@ -164,29 +163,23 @@ public class Authentication {
 
 
 
-            // 使用PasswordStore加密登录信息
             PasswordStore passwordStore = new PasswordStore("SHA");
 
             //passwordStore.storePassword(login,password);
 
-            passwordStore.printAllPasswords();
 
             byte[] encryptedLogin = login.getBytes();
             byte[] encryptedPassword = passwordStore.toHash(this.password).getBytes();
 
-            // 发送加密的登录信息
+
             channel.send(encryptedLogin);
             channel.send(encryptedPassword);
 
     }
 
-    // 示例加密登录信息方法，需要根据实际情况实现
-//    private byte[] encryptLoginInfo(String login, String password) {
-//        // 实现加密逻辑
-//        return new byte[0]; // 示例返回值
-//    }
 
-    // Getter 方法
+
+
     public Certif getLocalCertif() {
         return localCertif;
     }
@@ -199,8 +192,8 @@ public class Authentication {
         return keyPair;
     }
 
-    // 序列化和反序列化方法
-// 序列化方法
+
+
     public static byte[] toBytes(Certif certif) throws IOException {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         DataOutputStream dos = new DataOutputStream(baos);
@@ -218,7 +211,7 @@ public class Authentication {
         return baos.toByteArray();
     }
 
-    // 反序列化方法
+
     public static Certif bytesTo(byte[] data) throws IOException, GeneralSecurityException {
         ByteArrayInputStream bais = new ByteArrayInputStream(data);
         DataInputStream dis = new DataInputStream(bais);

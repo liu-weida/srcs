@@ -75,32 +75,32 @@ public class TestSecureChannelConfidentiality  {
 		
 		assertEquals(witness.getSent().size()+1, pirat.getSent().size());// pirat a enregistre aussi le message d'envoi de la cle secrete
 		assertEquals(witness.getReceived().size()+1, pirat.getReceived().size());// pirat a enregistre aussi le message de reception de la cle secrete
-		
-		
+
+
 		try(ObjectInputStream oissent = new ObjectInputStream(new ByteArrayInputStream(pirat.getSent().get(0)))){
 			Object o_sent =  oissent.readObject();
 			assertEquals(SealedObject.class,o_sent.getClass());
-			
+
 			assertThrows(InvalidKeyException.class,()->((SealedObject) o_sent).getObject(authclient.getLocalKeys().getPrivate()));
-			
+
 			SecretKey key_sent = (SecretKey) ((SealedObject) o_sent).getObject(authserveur.getLocalKeys().getPrivate());
-			
+
 			try(ObjectInputStream oisrcv = new ObjectInputStream(new ByteArrayInputStream(pirat.getReceived().get(0)))){
 				Object o_recv =  oisrcv.readObject();
 				assertEquals(SealedObject.class,o_recv.getClass());
 				assertThrows(InvalidKeyException.class,()->((SealedObject) o_recv).getObject(authserveur.getLocalKeys().getPrivate()));
 				SecretKey key_receive = (SecretKey) ((SealedObject) o_recv).getObject(authclient.getLocalKeys().getPrivate());
-				
+
 				SecretKey effective_key = secure.getSecretKey();
 				assertTrue(Arrays.equals(effective_key.getEncoded(), key_receive.getEncoded())
 						 || Arrays.equals(effective_key.getEncoded(), key_sent.getEncoded()));
-				
-				
+
+
 				assertFalse(included(pirat.getSent().get(0), key_receive.getEncoded()));
 				assertFalse(included(pirat.getSent().get(0), key_sent.getEncoded()));
 				assertFalse(included(pirat.getReceived().get(0), key_receive.getEncoded()));
 				assertFalse(included(pirat.getReceived().get(0), key_sent.getEncoded()));
-				
+
 			}
 		}
 		
