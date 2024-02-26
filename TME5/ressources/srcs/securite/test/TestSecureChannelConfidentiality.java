@@ -112,6 +112,6 @@ public class TestSecureChannelConfidentiality  {
 		for(int i=0;i<witness.getReceived().size();i++) {
 			assertFalse(Arrays.equals(witness.getReceived().get(i), pirat.getReceived().get(i+1)));
 		}
-		
+
 	}
 }

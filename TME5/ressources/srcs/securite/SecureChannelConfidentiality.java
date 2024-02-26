@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
+import java.util.Arrays;
 
 public class SecureChannelConfidentiality extends ChannelDecorator {
     private static SecretKey secretKey = null;
@@ -12,7 +13,9 @@ public class SecureChannelConfidentiality extends ChannelDecorator {
     private int tailleCle;
     private Authentication authentication;
 
-    public SecureChannelConfidentiality(Channel channel, Authentication authentication, String nomAlgo, int tailleCle) throws NoSuchAlgorithmException {
+    private Channel channel;
+
+    public SecureChannelConfidentiality(Channel channel, Authentication authentication, String nomAlgo, int tailleCle) throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, IllegalBlockSizeException, IOException, ClassNotFoundException {
         super(channel);
         this.nomAlgo = nomAlgo;
         this.tailleCle = tailleCle;
@@ -22,6 +25,21 @@ public class SecureChannelConfidentiality extends ChannelDecorator {
         keyGen.init(tailleCle);
         secretKey = keyGen.generateKey();
 
+        Cipher cipher = Cipher.getInstance("RSA");
+        cipher.init(Cipher.WRAP_MODE, authentication.getRemoteCertif().getPublicKey());
+        byte[] encryptedKey = cipher.wrap(secretKey);
+
+        channel.send(encryptedKey);
+
+        encryptedKey = channel.recv();
+
+        cipher.init(Cipher.UNWRAP_MODE, authentication.getLocalKeys().getPrivate());
+
+        if (secretKey == null) {
+            this.secretKey = (SecretKey) cipher.unwrap(encryptedKey, nomAlgo, Cipher.SECRET_KEY);
+        }
+
+
     }
 
     public SecretKey getSecretKey(){
@@ -29,22 +47,52 @@ public class SecureChannelConfidentiality extends ChannelDecorator {
     }
     @Override
     public void send(byte[] data) throws IOException {
+
+//        System.out.println(data + "123" );
+//        System.out.println(secretKey + " 123333");
+//        System.out.println(nomAlgo);
+
+        System.out.println(Arrays.toString(data) + "   123");
+
+
         try {
             Cipher cipher = Cipher.getInstance(nomAlgo);
             cipher.init(Cipher.ENCRYPT_MODE, secretKey);
             byte[] encryptedData = cipher.doFinal(data);
+
+
+
+//            Cipher cipher1 = Cipher.getInstance(nomAlgo);
+//            cipher1.init(Cipher.DECRYPT_MODE, secretKey);
+//
+//
+//            System.out.println(Arrays.toString(cipher1.doFinal(encryptedData)) + "   456");
+            Thread.sleep(1);
             super.send(encryptedData);
-        } catch (GeneralSecurityException e) {
+        } catch (GeneralSecurityException | InterruptedException e) {
             throw new IOException("", e);
         }
     }
 
     @Override
     public byte[] recv() throws IOException, ClassNotFoundException {
+        try {
+            Thread.sleep(1);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
         byte[] encryptedData = super.recv();
+        //System.out.println(Arrays.toString(encryptedData) + "456");
+//
+//        System.out.println(secretKey + " 456666");
+//
+//        System.out.println(nomAlgo);
         try {
             Cipher cipher = Cipher.getInstance(nomAlgo);
             cipher.init(Cipher.DECRYPT_MODE, secretKey);
+
+            System.out.println(Arrays.toString(cipher.doFinal(encryptedData)) + "456");
+
             return cipher.doFinal(encryptedData);
         } catch (GeneralSecurityException e) {
             throw new IOException("", e);
