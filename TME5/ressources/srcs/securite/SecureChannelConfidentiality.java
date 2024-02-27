@@ -15,24 +15,30 @@ public class SecureChannelConfidentiality extends ChannelDecorator {
 
     private Channel channel;
 
+    //这部分应该没啥问题
     public SecureChannelConfidentiality(Channel channel, Authentication authentication, String nomAlgo, int tailleCle) throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, IllegalBlockSizeException, IOException, ClassNotFoundException {
         super(channel);
         this.nomAlgo = nomAlgo;
         this.tailleCle = tailleCle;
         this.authentication = authentication;
 
+        // 生成对称密钥
         KeyGenerator keyGen = KeyGenerator.getInstance(nomAlgo);
         keyGen.init(tailleCle);
-        secretKey = keyGen.generateKey();
+        SecretKey newSecretKey = keyGen.generateKey();
 
+        //用非对称密钥加密密钥
         Cipher cipher = Cipher.getInstance("RSA");
         cipher.init(Cipher.WRAP_MODE, authentication.getRemoteCertif().getPublicKey());
-        byte[] encryptedKey = cipher.wrap(secretKey);
+        byte[] encryptedKey = cipher.wrap(newSecretKey);
 
+        //发送
         channel.send(encryptedKey);
 
+        //接受
         encryptedKey = channel.recv();
 
+        //用非对称密钥解密密钥
         cipher.init(Cipher.UNWRAP_MODE, authentication.getLocalKeys().getPrivate());
 
         if (secretKey == null) {
@@ -45,6 +51,9 @@ public class SecureChannelConfidentiality extends ChannelDecorator {
     public SecretKey getSecretKey(){
         return secretKey;
     }
+    
+    
+    //加密解密部分发送接收应该没有问题（我测过发送接收前后，加密解密前后是一样的）
     @Override
     public void send(byte[] data) throws IOException {
 
