@@ -15,6 +15,8 @@ public class SecureChannelConfidentiality extends ChannelDecorator {
 
     private Channel channel;
 
+    SecretKey newnewSecreKey;
+
     //这部分应该没啥问题
     public SecureChannelConfidentiality(Channel channel, Authentication authentication, String nomAlgo, int tailleCle) throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, IllegalBlockSizeException, IOException, ClassNotFoundException {
         super(channel);
@@ -41,18 +43,23 @@ public class SecureChannelConfidentiality extends ChannelDecorator {
         //用非对称密钥解密密钥
         cipher.init(Cipher.UNWRAP_MODE, authentication.getLocalKeys().getPrivate());
 
+        newnewSecreKey = (SecretKey) cipher.unwrap(encryptedKey, nomAlgo, Cipher.SECRET_KEY);
+        
+        setSercreKey();
+    }
+
+    public synchronized void setSercreKey(){
         if (secretKey == null) {
-            this.secretKey = (SecretKey) cipher.unwrap(encryptedKey, nomAlgo, Cipher.SECRET_KEY);
+            System.out.println("123123");
+            this.secretKey = newnewSecreKey;
         }
-
-
     }
 
     public SecretKey getSecretKey(){
         return secretKey;
     }
-    
-    
+
+
     //加密解密部分发送接收应该没有问题（我测过发送接收前后，加密解密前后是一样的）
     @Override
     public void send(byte[] data) throws IOException {
@@ -61,7 +68,7 @@ public class SecureChannelConfidentiality extends ChannelDecorator {
 //        System.out.println(secretKey + " 123333");
 //        System.out.println(nomAlgo);
 
-        System.out.println(Arrays.toString(data) + "   123");
+        //System.out.println(Arrays.toString(data) + "   123");
 
 
         try {
@@ -85,22 +92,23 @@ public class SecureChannelConfidentiality extends ChannelDecorator {
 
     @Override
     public byte[] recv() throws IOException, ClassNotFoundException {
+
         try {
             Thread.sleep(1);
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
         byte[] encryptedData = super.recv();
-        //System.out.println(Arrays.toString(encryptedData) + "456");
+        //System.out.println(Arbrays.toString(encryptedData) + "456");
 //
-//        System.out.println(secretKey + " 456666");
+        System.out.println(secretKey + " 456666");
 //
 //        System.out.println(nomAlgo);
         try {
             Cipher cipher = Cipher.getInstance(nomAlgo);
             cipher.init(Cipher.DECRYPT_MODE, secretKey);
 
-            System.out.println(Arrays.toString(cipher.doFinal(encryptedData)) + "456");
+            //System.out.println(Arrays.toString(cipher.doFinal(encryptedData)) + "456");
 
             return cipher.doFinal(encryptedData);
         } catch (GeneralSecurityException e) {
