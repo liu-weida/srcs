@@ -9,42 +9,53 @@ public class PasswordStore {
     private final String nomAlgoHash;
     static Map<String, String> passwordStore = new HashMap<>();
 
+
     public PasswordStore(String nomAlgoHash) {
         this.nomAlgoHash = nomAlgoHash;
     }
 
     public void storePassword(String user, String passwd) throws NoSuchAlgorithmException {
-        String hashedPassword = toHash(passwd);
+        byte[] password = toHash(passwd);
+        String hashedPassword = hashToHex(password);
         passwordStore.put(user, hashedPassword);
+
     }
 
     public boolean checkPassword(String user, String passwd) throws NoSuchAlgorithmException {
-        String hashedPassword = toHash(passwd);
+        byte[] password = toHash(passwd);
+        String hashedPassword = hashToHex(password);
         return hashedPassword.equals(passwordStore.get(user));
     }
 
-    public boolean checkPassword2(String user, String passwd) throws AuthenticationFailedException {
+    public boolean checkPassword2(String user, String passwd) throws NoSuchAlgorithmException, AuthenticationFailedException {
+
+
         String password = passwordStore.get(user);
+
         if (password == null){
             throw new AuthenticationFailedException("No password was entered.");
         }
+
         return password.equals(passwd);
     }
 
-    String toHash(String password) throws NoSuchAlgorithmException {
+    byte[] toHash(String password) throws NoSuchAlgorithmException {
         MessageDigest messageDigest = MessageDigest.getInstance(nomAlgoHash);
         byte[] hash = messageDigest.digest(password.getBytes());
-        return hashToHex(hash);
+        return hash;
     }
 
     String hashToHex(byte[] hash) {
         StringBuilder hexString = new StringBuilder();
         for (byte b : hash) {
-            String hex = Integer.toHexString(0xff &b);
-            if(hex.length() == 1)
-                hexString.append('0');
+            String hex = Integer.toHexString(0xff & b);
+            if(hex.length() == 1) hexString.append('0');
             hexString.append(hex);
         }
         return hexString.toString();
+    }
+
+    public static Map<String, String> getPasswordStore() {
+        return passwordStore;
     }
 }

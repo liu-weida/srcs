@@ -21,7 +21,7 @@ public class SecureChannelConfidentiality extends ChannelDecorator {
         newSecretKey = keyGen.generateKey();
 
         Cipher cipher = Cipher.getInstance(authentication.getLocalKeys().getPublic().getAlgorithm());
-        cipher.init(Cipher.ENCRYPT_MODE, authentication.getDistCert().getPublicKey());
+        cipher.init(Cipher.ENCRYPT_MODE, authentication.getRemoteCertif().getPublicKey());
         SealedObject sealedObject = new SealedObject(newSecretKey, cipher);
         channel.send(serializeSealedObject(sealedObject));
 
@@ -52,7 +52,7 @@ public class SecureChannelConfidentiality extends ChannelDecorator {
     }
 
     @Override
-    public byte[] recv() throws IOException, ClassNotFoundException {
+    public byte[] recv() throws IOException{
         byte[] encryptedData = super.recv();
         try {
             Cipher cipher = Cipher.getInstance(nomAlgo);

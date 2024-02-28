@@ -1,236 +1,242 @@
 package srcs.securite;
 
+import javax.crypto.BadPaddingException;
+import javax.crypto.Cipher;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
 import java.io.*;
 import java.security.*;
-import java.security.spec.X509EncodedKeySpec;
 import java.util.Arrays;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.Map;
+import java.util.Random;
+
 
 public class Authentication {
-    private final Channel channel;
-    private final Certif localCertif;
-    private Certif distCert;
+    private Certif localCertif;
+    private Certif remoteCertif;
     private KeyPair keyPair;
-    private PublicKey pubKey;
-
-    private PublicKey publicKeyClient;
+    private Channel channel;
     private PasswordStore passwordStore;
+    private PublicKey publicKey;
     private String login;
     private String password;
 
-    private static ConcurrentHashMap<String, Boolean> processedRequestsServer = new ConcurrentHashMap<>();
-    private static ConcurrentHashMap<String, Boolean> processedRequestsClient = new ConcurrentHashMap<>();
 
-    public Authentication(Channel channel, Certif certif, KeyPair keyPair, PasswordStore passwordStore, PublicKey authPubKey) throws IOException, GeneralSecurityException, ClassNotFoundException {
+    //server
+    public Authentication(Channel channel, Certif certif, KeyPair keyPair, PasswordStore passwordStore, PublicKey publicKey) throws IOException, GeneralSecurityException {
         this.channel = channel;
         this.localCertif = certif;
         this.keyPair = keyPair;
         this.passwordStore = passwordStore;
-        this.publicKeyClient = authPubKey;
+        this.publicKey = publicKey;
 
         authenticateServer();
-    }
-
-
-    public Authentication(Channel channel, Certif certif, KeyPair keyPair, String password, String login, PublicKey authPubKey) throws IOException, GeneralSecurityException, ClassNotFoundException {
-        this.channel = channel;
-        this.localCertif = certif;
-        this.keyPair = keyPair;
-        this.pubKey = authPubKey;
-        this.login = login;
-        this.password = password;
-
-        authenticateClient();
-    }
-
-    public Authentication(Channel channel, Certif certif, KeyPair keyPair, PublicKey authPubKey,String password ,String login) throws IOException, GeneralSecurityException, ClassNotFoundException {
-        this.channel = channel;
-        this.localCertif = certif;
-        this.keyPair = keyPair;
-        this.pubKey = authPubKey;
-        this.login = login;
-        this.password = password;
-
-        authenticateClient();
-    }
-
-    //server
-    private void authenticateServer() throws IOException, ClassNotFoundException, GeneralSecurityException {
-        channel.send(toBytes(localCertif));
-        try {
-            channel.send(generateCertificateHash(localCertif));
-        } catch (Exception ex) {
-            throw new RuntimeException(ex);
-        }
-
-        byte[] clientCertBytes = channel.recv();
-        byte[] clientCertBytesHash = channel.recv();
-
-        String requestIdentifier = Arrays.toString(clientCertBytesHash);
-        if (processedRequestsServer.putIfAbsent(requestIdentifier, true) != null) {
-            throw new AuthenticationFailedException("Detected replay attack to server.");
-        }
-
-            Certif clientCert = bytesTo(clientCertBytes);
-
-
-        try {
-            if (!compareCertificateHash(clientCertBytesHash,generateCertificateHash(clientCert))){
-                throw new CertificateCorruptedException("The certificate is damaged.");
-            }
-        } catch (Exception ex) {
-            throw new RuntimeException(ex);
-        }
-
-        try {
-                if (!clientCert.verify(publicKeyClient)) {
-                    throw new CertificateCorruptedException("Client certificate verification failed.");
-                }
-            }catch (CertificateCorruptedException e){
-                throw new CertificateCorruptedException("Client certificate is corrupted.", e);
-            }
-
-
-
-            this.distCert = clientCert;
-
-
-
-            byte[] encryptedLogin = channel.recv();
-            byte[] encryptedPassword = channel.recv();
-
-
-            String login = new String(encryptedLogin);
-
-            String password = passwordStore.hashToHex(encryptedPassword);
-
-
-            if (passwordStore.checkPassword2(login,password)) {
-                throw new AuthenticationFailedException("Password verification failed.");
-            }
-
 
     }
-
 
     //client
-    private void authenticateClient() throws IOException, ClassNotFoundException, GeneralSecurityException {
+    public Authentication(Channel channel, Certif certif, KeyPair keyPair, String login, String password, PublicKey publicKey) throws IOException, GeneralSecurityException {
+        this.channel = channel;
+        this.localCertif = certif;
+        this.keyPair = keyPair;
+        this.login = login;
+        this.password = password;
+        this.publicKey = publicKey;
 
-
-            //System.out.println("send c:");
-            channel.send(toBytes(localCertif));
-        try {
-            channel.send(generateCertificateHash(localCertif));
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-
-
-            byte[] serverCertBytes = channel.recv();
-            byte[] serverCertBytesHash = channel.recv();
-
-        String requestIdentifier = Arrays.toString(serverCertBytesHash);
-        if (processedRequestsClient.putIfAbsent(requestIdentifier, true) != null) {
-            throw new AuthenticationFailedException("Detected replay attack to server.");
-        }
-
-
-            Certif serverCert = bytesTo(serverCertBytes);
-
-
-        try {
-            if (!compareCertificateHash(serverCertBytesHash,generateCertificateHash(serverCert))){
-                throw new CertificateCorruptedException("The certificate is damaged.");
-            }
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-
-        if (!serverCert.verify(pubKey)) {
-                throw new AuthenticationFailedException("Server certificate verification failed.");
-            }
-            this.distCert = serverCert;
-
-
-
-            PasswordStore passwordStore = new PasswordStore("SHA");
-
-            //passwordStore.storePassword(login,password);
-
-
-            byte[] encryptedLogin = login.getBytes();
-            byte[] encryptedPassword = passwordStore.toHash(this.password).getBytes();
-
-
-            channel.send(encryptedLogin);
-            channel.send(encryptedPassword);
+        authenticateClient();
 
     }
 
+    private void authenticateServer() throws IOException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException, NoSuchAlgorithmException, NoSuchPaddingException {
+
+
+        Cipher cipher = Cipher.getInstance("RSA");
+        byte[] sendCertHash = certifToHash(localCertif.toByteArray());
+
+
+        channel.send(localCertif.toByteArray());
+        channel.send(sendCertHash);
+
+
+        byte[] certBytes = channel.recv();
+        byte[] recvCertHash = channel.recv();
+
+        byte[] calCertHash = certifToHash(certBytes);
+        if (!compareHashes(recvCertHash, calCertHash)) {
+            throw new CertificateCorruptedException();
+        }
+
+
+        this.remoteCertif = toCertif(certBytes);
+        if(!remoteCertif.verify(publicKey))
+            throw new CertificateCorruptedException();
+
+
+        Random rand = new Random();
+        int nonce = rand.nextInt(100000);
+        channel.send(toByteArray(nonce));
+
+
+        cipher.init(Cipher.DECRYPT_MODE, remoteCertif.getPublicKey());
+        byte[] nonceDecrypt = cipher.doFinal(channel.recv());
+        if(toInt(nonceDecrypt) != nonce)
+            throw new AuthenticationFailedException();
 
 
 
-    public Certif getLocalCertif() {
+        cipher.init(Cipher.ENCRYPT_MODE, this.keyPair.getPrivate());
+        byte[] res = cipher.doFinal(channel.recv());
+        channel.send(res);
+
+
+//        String login = toString(channel.recv());
+//
+//        byte[] pass = channel.recv();
+//        cipher.init(Cipher.DECRYPT_MODE, this.keyPair.getPrivate());
+//        byte[] passDecrypt = cipher.doFinal(pass);
+//        String passwd = toString(passDecrypt);
+//        if(!passwordStore.checkPassword(login,passwd))
+//            throw new AuthenticationFailedException();
+
+        byte[] recvLogin = channel.recv();
+        byte[] recvEncryptedPassword = channel.recv();
+
+
+        String login = new String(recvLogin);
+
+        String password = passwordStore.hashToHex(recvEncryptedPassword);
+
+
+        if (!passwordStore.checkPassword2(login,password)) {
+            throw new AuthenticationFailedException("Password verification failed.");
+        }
+
+
+    }
+
+    private void authenticateClient() throws NoSuchPaddingException, NoSuchAlgorithmException, IOException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException {
+        Cipher cipher = Cipher.getInstance("RSA");
+
+        byte[] sendCertHash = certifToHash(localCertif.toByteArray());
+
+        channel.send(localCertif.toByteArray());
+        channel.send(sendCertHash);
+
+
+        byte[] certBytes = channel.recv();
+        byte[] recvCertHash = channel.recv();
+
+        byte[] calCertHash = certifToHash(certBytes);
+        if (!compareHashes(recvCertHash, calCertHash)) {
+            throw new CertificateCorruptedException();
+        }
+
+
+        this.remoteCertif = toCertif(certBytes);
+        if(!remoteCertif.verify(publicKey))
+            throw new CertificateCorruptedException();
+
+        cipher.init(Cipher.ENCRYPT_MODE, this.keyPair.getPrivate());
+        byte[] res = cipher.doFinal(channel.recv());
+        channel.send(res);
+
+
+
+        Random rand = new Random();
+        int nonce = rand.nextInt(10000);
+        channel.send(toByteArray(nonce));
+
+        cipher.init(Cipher.DECRYPT_MODE, remoteCertif.getPublicKey());
+        byte[] nonceDecrypt = cipher.doFinal(channel.recv());
+        if(toInt(nonceDecrypt) != nonce)
+            throw new AuthenticationFailedException();
+
+
+        PasswordStore passwordStore = new PasswordStore("SHA");
+
+
+        byte[] sendLogin = login.getBytes();
+        byte[] sendEncryptedPassword = passwordStore.toHash(this.password);
+
+
+        channel.send(sendLogin);
+        channel.send(sendEncryptedPassword);
+    }
+
+    public Certif getLocalCertif(){
         return localCertif;
     }
 
-    public Certif getDistCert() {
-        return distCert;
+    public Certif getRemoteCertif(){
+        return remoteCertif;
     }
 
-    public KeyPair getLocalKeys() {
+    public KeyPair getLocalKeys(){
         return keyPair;
     }
 
-
-
-    public static byte[] toBytes(Certif certif) throws IOException {
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        DataOutputStream dos = new DataOutputStream(baos);
-
-        dos.writeUTF(certif.getIdentifier());
-        byte[] publicKeyBytes = certif.getPublicKey().getEncoded();
-        dos.writeInt(publicKeyBytes.length); // 明确记录公钥的长度
-        dos.write(publicKeyBytes);
-        dos.writeInt(certif.getAuthoritySignature().length);
-        dos.write(certif.getAuthoritySignature());
-        dos.writeUTF(certif.getNomAlgoSign());
-
-        dos.flush();
-
-        return baos.toByteArray();
+    private Certif toCertif (byte[] bytes) {
+        Object obj = null;
+        try (ObjectInputStream ois = new ObjectInputStream (new ByteArrayInputStream (bytes));){
+            obj = ois.readObject();
+        } catch (IOException | ClassNotFoundException ex) {
+            ex.printStackTrace();
+        }
+        return (Certif)obj;
     }
 
-
-    public static Certif bytesTo(byte[] data) throws IOException, GeneralSecurityException {
-        ByteArrayInputStream bais = new ByteArrayInputStream(data);
-        DataInputStream dis = new DataInputStream(bais);
-
-        String id = dis.readUTF();
-        int publicKeyLength = dis.readInt(); // 读取公钥的长度
-        byte[] publicKeyBytes = new byte[publicKeyLength];
-        dis.readFully(publicKeyBytes); // 根据记录的长度读取公钥
-        int signLength = dis.readInt();
-        byte[] signAutoCer = new byte[signLength];
-        dis.readFully(signAutoCer);
-        String nomAlgoSign = dis.readUTF();
-
-        PublicKey publicKey = KeyFactory.getInstance("RSA").generatePublic(new X509EncodedKeySpec(publicKeyBytes));
-
-        Certif cer = new Certif(id, publicKey, signAutoCer, nomAlgoSign);
-
-       // System.out.println(cer.toString());
-
-        return cer;
+    private byte[] toByteArray (String s) {
+        byte[] bytes;
+        try (ByteArrayOutputStream bos = new ByteArrayOutputStream();
+             ObjectOutputStream oos = new ObjectOutputStream(bos);){
+            oos.writeUTF(s);
+            oos.flush();
+            bytes = bos.toByteArray();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        return bytes;
     }
 
-    public static byte[] generateCertificateHash(Certif certif) throws Exception {
+    private String toString (byte[] bytes) {
+        Object obj;
+        try (ObjectInputStream ois = new ObjectInputStream (new ByteArrayInputStream (bytes));){
+            obj = ois.readUTF();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        return (String) obj;
+    }
+
+    private byte[] toByteArray (int i) {
+        byte[] bytes;
+        try (ByteArrayOutputStream bos = new ByteArrayOutputStream();
+             ObjectOutputStream oos = new ObjectOutputStream(bos);){
+            oos.writeInt(i);
+            oos.flush();
+            bytes = bos.toByteArray();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        return bytes;
+    }
+
+    private int toInt(byte[] bytes) {
+        Object obj;
+        try (ByteArrayInputStream bis = new ByteArrayInputStream (bytes); ObjectInputStream ois = new ObjectInputStream (bis);){
+            obj = ois.readInt();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        return (Integer) obj;
+    }
+
+    private byte[] certifToHash(byte[] input) throws NoSuchAlgorithmException {
         MessageDigest digest = MessageDigest.getInstance("SHA-256");
-        byte[] certBytes = toBytes(certif);
-        return digest.digest(certBytes);
+        return digest.digest(input);
     }
 
-    public static boolean compareCertificateHash(byte[] hash1, byte[] hash2) {
+    private boolean compareHashes(byte[] hash1, byte[] hash2) {
         return Arrays.equals(hash1, hash2);
     }
 

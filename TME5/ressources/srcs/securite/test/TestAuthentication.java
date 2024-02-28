@@ -46,8 +46,6 @@ public class TestAuthentication {
 	private AuthenticationFactory authfact;
 	private RetourTest ret;
 
-
-
 	@Before
 	public void first() throws Exception {
 		authfact = new AuthenticationFactory();
@@ -95,13 +93,13 @@ public class TestAuthentication {
 		assertEquals(authfact.getCertif_serveur().getIdentifier() ,authserveur.getLocalCertif().getIdentifier());
 		assertEquals(authfact.getCertif_serveur().getPublicKey() ,authserveur.getLocalCertif().getPublicKey());
 
-		assertArrayEquals(authfact.getCertif_client().getAuthoritySignature() ,authserveur.getDistCert().getAuthoritySignature());
-		assertEquals(authfact.getCertif_client().getIdentifier() ,authserveur.getDistCert().getIdentifier());
-		assertEquals(authfact.getCertif_client().getPublicKey() ,authserveur.getDistCert().getPublicKey());
+		assertArrayEquals(authfact.getCertif_client().getAuthoritySignature() ,authserveur.getRemoteCertif().getAuthoritySignature());
+		assertEquals(authfact.getCertif_client().getIdentifier() ,authserveur.getRemoteCertif().getIdentifier());
+		assertEquals(authfact.getCertif_client().getPublicKey() ,authserveur.getRemoteCertif().getPublicKey());
 
-		assertArrayEquals(authfact.getCertif_serveur().getAuthoritySignature() ,authclient.getDistCert().getAuthoritySignature());
-		assertEquals(authfact.getCertif_serveur().getIdentifier() ,authclient.getDistCert().getIdentifier());
-		assertEquals(authfact.getCertif_serveur().getPublicKey() ,authclient.getDistCert().getPublicKey());
+		assertArrayEquals(authfact.getCertif_serveur().getAuthoritySignature() ,authclient.getRemoteCertif().getAuthoritySignature());
+		assertEquals(authfact.getCertif_serveur().getIdentifier() ,authclient.getRemoteCertif().getIdentifier());
+		assertEquals(authfact.getCertif_serveur().getPublicKey() ,authclient.getRemoteCertif().getPublicKey());
 
 
 		//on s'assure que le premier message du serveur vers le client contient les info du certif du serveur
@@ -126,12 +124,6 @@ public class TestAuthentication {
 		Cipher cipher = Cipher.getInstance(ChannelTestUtil.ALGOKEY_A);
 		//on s'assure que le passwd du client ne passe pas en clair sur le réseau
 		for(byte[] mess : snifferclient.getSent()) {
-
-			System.out.println(mess +"123");
-			System.out.println(authfact.getPasswdclient().getBytes() +"123");
-
-			System.out.println(included(mess,authfact.getPasswdclient().getBytes()));
-
 			assertFalse(included(mess,authfact.getPasswdclient().getBytes()));
 			cipher.init(Cipher.DECRYPT_MODE,authfact.getKpserveur().getPublic());
 			//on verifie que c'est aussi le cas en dechiffrant avec une cle publique
@@ -289,7 +281,7 @@ public class TestAuthentication {
 
 
 		@Override
-		public byte[] recv() throws IOException, ClassNotFoundException {
+		public byte[] recv() throws IOException{
 			if(!alreadyexpectedreceived) {
 				//on cache ici ce que la victime est cense envoyer pour l'authtentification
 				for(int i=0;i<expectedreceived.size();i++) {

@@ -34,7 +34,7 @@ public final class AuthenticationFactory {
 	
 //	kpclient = Util.generateNewKeyPair(ALGOKEY_A,SIZEKEY_A);
 //	kpserveur = Util.generateNewKeyPair(ALGOKEY_A,SIZEKEY_A);
-//
+//			
 //	CertificationAuthority ca = new CertificationAuthority(ALGOKEY_A,SIZEKEY_A, ALGOSIGN);
 //	Certif certif_client  = ca.declarePublicKey(IDCLIENT, kpclient.getPublic());
 //	Certif certif_serveur = ca.declarePublicKey(IDSERVER, kpserveur.getPublic());
@@ -56,12 +56,12 @@ public final class AuthenticationFactory {
 		ps.storePassword(loginclient, passwdclient);
 	}
 		
-	public Authentication newServeurAuthentication(Channel c) throws IOException, GeneralSecurityException, ClassNotFoundException {
+	public Authentication newServeurAuthentication(Channel c) throws IOException, GeneralSecurityException {
 		return new Authentication(c, certif_serveur, kpserveur, ps, ca.getPublicKey());
 	}
 	
-	public Authentication newClientAuthentication(Channel c) throws IOException, GeneralSecurityException, ClassNotFoundException {
-		return new Authentication(c, certif_client, kpclient,ca.getPublicKey(), passwdclient, loginclient);
+	public Authentication newClientAuthentication(Channel c) throws IOException, GeneralSecurityException {
+		return new Authentication(c, certif_client, kpclient,loginclient, passwdclient, ca.getPublicKey());
 	}
 
 	public KeyPair getKpclient() {

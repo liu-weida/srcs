@@ -1,5 +1,8 @@
 package srcs.securite;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.security.*;
 
@@ -43,5 +46,17 @@ public class Certif implements Serializable {
         return nomAlgoSign;
     }
 
+    public byte[] toByteArray () {
+        byte[] bytes = null;
+        try (ByteArrayOutputStream bos = new ByteArrayOutputStream();
+             ObjectOutputStream oos = new ObjectOutputStream(bos);){
+            oos.writeObject(this);
+            oos.flush();
+            bytes = bos.toByteArray();
+        } catch (IOException ex) {
+            ex.printStackTrace();
+        }
+        return bytes;
+    }
 
 }

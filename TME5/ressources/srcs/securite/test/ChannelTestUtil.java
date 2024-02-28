@@ -42,7 +42,7 @@ public final class ChannelTestUtil {
 	
 	@FunctionalInterface
 	public static  interface ChannelFactory{
-		Channel newChannel(Socket s) throws IOException, GeneralSecurityException, ClassNotFoundException;
+		Channel newChannel(Socket s)throws IOException,GeneralSecurityException;
 	}
 	
 	public static class ChannelModifier extends ChannelDecorator {
@@ -63,7 +63,7 @@ public final class ChannelTestUtil {
 		}
 
 		@Override
-		public byte[] recv() throws IOException, ClassNotFoundException {
+		public byte[] recv() throws IOException{
 			byte[] res = super.recv();
 			return res;
 		}
@@ -138,7 +138,7 @@ public final class ChannelTestUtil {
 		}
 
 		@Override
-		public byte[] recv() throws IOException, ClassNotFoundException {
+		public byte[] recv() throws IOException {
 			byte[] res = super.recv();
 			received.add(Arrays.copyOf(res,res.length));
 			return res;
