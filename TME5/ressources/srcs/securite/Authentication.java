@@ -2,20 +2,16 @@ package srcs.securite;
 
 import java.io.*;
 import java.security.*;
-import java.security.cert.CertificateException;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.Arrays;
 import java.util.concurrent.ConcurrentHashMap;
 
-
-
 public class Authentication {
-
-    private Channel channel;
-    private Certif localCertif;
-    private Certif remoteCertif;
+    private final Channel channel;
+    private final Certif localCertif;
+    private Certif distCert;
     private KeyPair keyPair;
-    private PublicKey publicKeyServer;
+    private PublicKey pubKey;
 
     private PublicKey publicKeyClient;
     private PasswordStore passwordStore;
@@ -25,35 +21,33 @@ public class Authentication {
     private static ConcurrentHashMap<String, Boolean> processedRequestsServer = new ConcurrentHashMap<>();
     private static ConcurrentHashMap<String, Boolean> processedRequestsClient = new ConcurrentHashMap<>();
 
-
-
-    public Authentication(Channel channel, Certif certif, KeyPair keyPair, PasswordStore passwordStore, PublicKey authorityPublicKey) throws IOException, GeneralSecurityException, ClassNotFoundException {
+    public Authentication(Channel channel, Certif certif, KeyPair keyPair, PasswordStore passwordStore, PublicKey authPubKey) throws IOException, GeneralSecurityException, ClassNotFoundException {
         this.channel = channel;
         this.localCertif = certif;
         this.keyPair = keyPair;
         this.passwordStore = passwordStore;
-        this.publicKeyClient = authorityPublicKey;
+        this.publicKeyClient = authPubKey;
 
         authenticateServer();
     }
 
 
-    public Authentication(Channel channel, Certif certif, KeyPair keyPair, String password, String login, PublicKey authorityPublicKey) throws IOException, GeneralSecurityException, ClassNotFoundException {
+    public Authentication(Channel channel, Certif certif, KeyPair keyPair, String password, String login, PublicKey authPubKey) throws IOException, GeneralSecurityException, ClassNotFoundException {
         this.channel = channel;
         this.localCertif = certif;
         this.keyPair = keyPair;
-        this.publicKeyServer = authorityPublicKey;
+        this.pubKey = authPubKey;
         this.login = login;
         this.password = password;
 
         authenticateClient();
     }
 
-    public Authentication(Channel channel, Certif certif, KeyPair keyPair, PublicKey authorityPublicKey,String password ,String login) throws IOException, GeneralSecurityException, ClassNotFoundException {
+    public Authentication(Channel channel, Certif certif, KeyPair keyPair, PublicKey authPubKey,String password ,String login) throws IOException, GeneralSecurityException, ClassNotFoundException {
         this.channel = channel;
         this.localCertif = certif;
         this.keyPair = keyPair;
-        this.publicKeyServer = authorityPublicKey;
+        this.pubKey = authPubKey;
         this.login = login;
         this.password = password;
 
@@ -62,19 +56,15 @@ public class Authentication {
 
     //server
     private void authenticateServer() throws IOException, ClassNotFoundException, GeneralSecurityException {
-
-
-            channel.send(toBytes(localCertif));
-
+        channel.send(toBytes(localCertif));
         try {
             channel.send(generateCertificateHash(localCertif));
         } catch (Exception ex) {
             throw new RuntimeException(ex);
         }
 
-
-            byte[] clientCertBytes = channel.recv();
-            byte[] clientCertBytesHash = channel.recv();
+        byte[] clientCertBytes = channel.recv();
+        byte[] clientCertBytesHash = channel.recv();
 
         String requestIdentifier = Arrays.toString(clientCertBytesHash);
         if (processedRequestsServer.putIfAbsent(requestIdentifier, true) != null) {
@@ -102,7 +92,7 @@ public class Authentication {
 
 
 
-            this.remoteCertif = clientCert;
+            this.distCert = clientCert;
 
 
 
@@ -156,10 +146,10 @@ public class Authentication {
             throw new RuntimeException(e);
         }
 
-        if (!serverCert.verify(publicKeyServer)) {
+        if (!serverCert.verify(pubKey)) {
                 throw new AuthenticationFailedException("Server certificate verification failed.");
             }
-            this.remoteCertif = serverCert;
+            this.distCert = serverCert;
 
 
 
@@ -184,8 +174,8 @@ public class Authentication {
         return localCertif;
     }
 
-    public Certif getRemoteCertif() {
-        return remoteCertif;
+    public Certif getDistCert() {
+        return distCert;
     }
 
     public KeyPair getLocalKeys() {

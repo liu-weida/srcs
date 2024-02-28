@@ -76,7 +76,7 @@ public class TestSecureChannelConfidentiality  {
 		assertEquals(witness.getSent().size()+1, pirat.getSent().size());// pirat a enregistre aussi le message d'envoi de la cle secrete
 		assertEquals(witness.getReceived().size()+1, pirat.getReceived().size());// pirat a enregistre aussi le message de reception de la cle secrete
 
-
+		
 		try(ObjectInputStream oissent = new ObjectInputStream(new ByteArrayInputStream(pirat.getSent().get(0)))){
 			Object o_sent =  oissent.readObject();
 			assertEquals(SealedObject.class,o_sent.getClass());

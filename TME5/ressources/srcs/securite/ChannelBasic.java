@@ -1,8 +1,6 @@
 package srcs.securite;
 
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
+import java.io.*;
 import java.net.InetAddress;
 import java.net.Socket;
 
@@ -16,16 +14,19 @@ public class ChannelBasic implements Channel{
 
     @Override
     public void send(byte[] bytesArray) throws IOException {
-        ObjectOutputStream oos = new ObjectOutputStream(socket.getOutputStream());
-        oos.writeObject(bytesArray);
-        oos.flush();
+        DataOutputStream dos = new DataOutputStream(socket.getOutputStream());
+        dos.writeInt(bytesArray.length);
+        dos.write(bytesArray);
+        dos.flush();
     }
 
     @Override
     public byte[] recv() throws IOException, ClassNotFoundException {
-        ObjectInputStream ois = new ObjectInputStream(socket.getInputStream());
-        byte[] bytesArray = (byte[]) ois.readObject();
-        return bytesArray;
+        DataInputStream dis = new DataInputStream(socket.getInputStream());
+        byte[] recv = new byte[dis.readInt()];
+        for (int i = 0; i < recv.length; i++)
+            recv[i] = dis.readByte();
+        return recv;
     }
 
     @Override

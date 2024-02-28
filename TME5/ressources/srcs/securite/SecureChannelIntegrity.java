@@ -4,14 +4,10 @@ import java.io.IOException;
 import java.security.*;
 
 public class SecureChannelIntegrity extends ChannelDecorator{
-
     private String nomAlgo;
     private Authentication authentication;
 
-
-
-
-    public SecureChannelIntegrity(Channel channel, Authentication authentication, String nomAlgo ) {
+    public SecureChannelIntegrity(Channel channel, Authentication authentication, String nomAlgo) {
         super(channel);
         this.authentication = authentication;
         this.nomAlgo = nomAlgo;
@@ -19,47 +15,33 @@ public class SecureChannelIntegrity extends ChannelDecorator{
 
     @Override
     public void send(byte[] bytesArray) throws IOException {
-
-        PrivateKey privkey = authentication.getLocalKeys().getPrivate();
-        Signature signature;
-        byte[] res;
         try {
-            signature = Signature.getInstance(nomAlgo);
-            signature.initSign(privkey);
+            Signature signature = Signature.getInstance(nomAlgo);
+            signature.initSign(authentication.getLocalKeys().getPrivate());
             signature.update(bytesArray);
-            res = signature.sign();
+            byte[] res = signature.sign();
+            super.send(bytesArray);
+            super.send(res);
         } catch (NoSuchAlgorithmException | SignatureException | InvalidKeyException e) {
             throw new RuntimeException(e);
         }
-
-        super.send(bytesArray);
-        super.send(res);
-
-
     }
 
     @Override
     public byte[] recv() throws IOException, ClassNotFoundException{
-
         byte[] bytesArray = super.recv();
         byte[] res = super.recv();
 
-        PublicKey pubkey = authentication.getRemoteCertif().getPublicKey();
-
         try {
             Signature sig = Signature.getInstance(nomAlgo);
-            sig.initVerify(pubkey);
+            sig.initVerify(authentication.getDistCert().getPublicKey());
             sig.update(bytesArray);
-
-            boolean verified = sig.verify(res);
-            if (!verified) {
+            if (! sig.verify(res)) {
                 throw new CorruptedMessageException("Signature verification failed.");
             }
             return bytesArray;
         } catch (NoSuchAlgorithmException | SignatureException | InvalidKeyException e) {
             throw new CorruptedMessageException("error");
         }
-
     }
-
 }

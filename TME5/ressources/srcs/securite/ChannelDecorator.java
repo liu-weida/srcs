@@ -1,12 +1,7 @@
 package srcs.securite;
 
-import javax.crypto.BadPaddingException;
-import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.NoSuchPaddingException;
 import java.io.IOException;
 import java.net.InetAddress;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
 
 public class ChannelDecorator implements Channel {
     private final Channel channel;

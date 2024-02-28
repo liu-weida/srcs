@@ -15,7 +15,6 @@ import java.security.KeyPair;
 import java.security.PublicKey;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
 
 import javax.crypto.Cipher;
 
@@ -96,13 +95,13 @@ public class TestAuthentication {
 		assertEquals(authfact.getCertif_serveur().getIdentifier() ,authserveur.getLocalCertif().getIdentifier());
 		assertEquals(authfact.getCertif_serveur().getPublicKey() ,authserveur.getLocalCertif().getPublicKey());
 
-		assertArrayEquals(authfact.getCertif_client().getAuthoritySignature() ,authserveur.getRemoteCertif().getAuthoritySignature());
-		assertEquals(authfact.getCertif_client().getIdentifier() ,authserveur.getRemoteCertif().getIdentifier());
-		assertEquals(authfact.getCertif_client().getPublicKey() ,authserveur.getRemoteCertif().getPublicKey());
+		assertArrayEquals(authfact.getCertif_client().getAuthoritySignature() ,authserveur.getDistCert().getAuthoritySignature());
+		assertEquals(authfact.getCertif_client().getIdentifier() ,authserveur.getDistCert().getIdentifier());
+		assertEquals(authfact.getCertif_client().getPublicKey() ,authserveur.getDistCert().getPublicKey());
 
-		assertArrayEquals(authfact.getCertif_serveur().getAuthoritySignature() ,authclient.getRemoteCertif().getAuthoritySignature());
-		assertEquals(authfact.getCertif_serveur().getIdentifier() ,authclient.getRemoteCertif().getIdentifier());
-		assertEquals(authfact.getCertif_serveur().getPublicKey() ,authclient.getRemoteCertif().getPublicKey());
+		assertArrayEquals(authfact.getCertif_serveur().getAuthoritySignature() ,authclient.getDistCert().getAuthoritySignature());
+		assertEquals(authfact.getCertif_serveur().getIdentifier() ,authclient.getDistCert().getIdentifier());
+		assertEquals(authfact.getCertif_serveur().getPublicKey() ,authclient.getDistCert().getPublicKey());
 
 
 		//on s'assure que le premier message du serveur vers le client contient les info du certif du serveur
