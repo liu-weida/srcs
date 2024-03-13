@@ -1,0 +1,33 @@
+syntax = "proto3";
+
+import "google/protobuf/wrappers.proto";
+import "google/protobuf/empty.proto";
+
+option java_multiple_files = true;
+
+message SubM{
+    string pseudo = 1;
+    string host = 2;
+    int32 port = 3;
+}
+
+message SendM{
+    string pseudo = 1;
+    string message = 2;
+}
+
+service Server{
+    rpc subscribe(SubM) returns (google.protobuf.BoolValue);
+    rpc send(SendM) returns (google.protobuf.Int32Value);
+    rpc listChatter(google.protobuf.Empty) returns (ListChatter);
+    rpc unsubscribe(google.protobuf.StringValue) returns (google.protobuf.Empty);
+}
+
+
+service Client{
+    rpc newMessage(SendM) returns (google.protobuf.Empty);
+}
+
+message ListChatter{
+    repeated string list = 1;
+}
