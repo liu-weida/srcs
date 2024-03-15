@@ -1,4 +1,4 @@
-SRCS : Systèmes Répartis Client/Serveur
+# SRCS : Systèmes Répartis Client/Serveur
 
 Contact with weixin :
 ZHOU runlin
