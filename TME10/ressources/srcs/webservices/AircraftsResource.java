@@ -14,6 +14,9 @@ import java.util.List;
 public class AircraftsResource extends ServerResource {
     @Get("json")
     public Aircraft[] request() {
+        if (getRequest().getResourceRef().getPath().startsWith("/admin") && getResponse().getServerInfo().getPort() == 4343)
+            throw new ResourceException(Status.CLIENT_ERROR_NOT_FOUND);
+
         Application app = this.getApplication();
         if (!(app instanceof AirlineApplication)) {
             throw new ResourceException(Status.SERVER_ERROR_INTERNAL);
@@ -30,6 +33,9 @@ public class AircraftsResource extends ServerResource {
     @Put("json")
     @Post("json")
     public Representation add(Representation r) throws Exception {
+        if (getResponse().getServerInfo().getPort() == 4343 || !getRequest().getResourceRef().getPath().startsWith("/admin"))
+            throw new ResourceException(Status.CLIENT_ERROR_METHOD_NOT_ALLOWED);
+
         Application app = this.getApplication();
         if(! (app instanceof AirlineApplication)) {
             throw new ResourceException(Status.SERVER_ERROR_INTERNAL);

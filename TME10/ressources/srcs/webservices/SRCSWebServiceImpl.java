@@ -23,7 +23,6 @@ public class SRCSWebServiceImpl implements SRCSWebService {
 
     @Override
     public void undeploy() throws Exception {
-//        componentClient.stop();
-//        componentAdmin.stop();
+        component.stop();
     }
 }

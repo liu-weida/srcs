@@ -138,12 +138,10 @@ public class AirlineServiceTest {
 		final ClientResource clientuser = new ClientResource("http://localhost:"+airsrcs_portuser+"/airports");
 		final ClientResource clientadmin2 = new ClientResource("http://localhost:"+airsrcs_portadmin+"/airports");
 
-		ResourceException re1 = assertThrows(ResourceException.class, ()->clientuser.post(Arrays.asList(orly)));
+		ResourceException re1 = assertThrows(ResourceException.class, ()->clientuser.post(new JacksonRepresentation<List<Airport>>(Arrays.asList(orly))));
 		assertEquals(Status.CLIENT_ERROR_METHOD_NOT_ALLOWED, re1.getResponse().getStatus());
 		
-		
-		
-		ResourceException re2 = assertThrows(ResourceException.class, ()->clientadmin2.post(Arrays.asList(orly)));
+		ResourceException re2 = assertThrows(ResourceException.class, ()->clientadmin2.post(new JacksonRepresentation<List<Airport>>(Arrays.asList(orly))));
 		assertEquals(Status.CLIENT_ERROR_METHOD_NOT_ALLOWED, re2.getResponse().getStatus());
 					
 		
@@ -200,11 +198,11 @@ public class AirlineServiceTest {
 
 		final ClientResource clientadmin2 = new ClientResource("http://localhost:"+airsrcs_portadmin+"/aircrafts");
 
-		ResourceException re1 = assertThrows(ResourceException.class, ()->clientuser.post(Arrays.asList(cesna)) );
+		ResourceException re1 = assertThrows(ResourceException.class, ()->clientuser.post(new JacksonRepresentation<List<Aircraft>>(Arrays.asList(cesna))) );
 		assertEquals(Status.CLIENT_ERROR_METHOD_NOT_ALLOWED, re1.getResponse().getStatus());
 		
 		
-		ResourceException re2 = assertThrows(ResourceException.class, ()->clientadmin2.post(Arrays.asList(cesna)));
+		ResourceException re2 = assertThrows(ResourceException.class, ()->clientadmin2.post(new JacksonRepresentation<List<Aircraft>>(Arrays.asList(cesna))));
 		assertEquals(Status.CLIENT_ERROR_METHOD_NOT_ALLOWED, re2.getResponse().getStatus());
 				
 		final ClientResource clientuser2 = new ClientResource("http://localhost:"+airsrcs_portuser+"/admin/aircrafts");
@@ -261,7 +259,7 @@ public class AirlineServiceTest {
 					));
 		});
 		assertEquals(Status.CLIENT_ERROR_PRECONDITION_FAILED,re2.getResponse().getStatus());
-		
+
 		//test d'un aéroport d'arrivée qui n'existe pas dans la base
 		ResourceException re3 = assertThrows(ResourceException.class, () ->{
 			admin.post(new JacksonRepresentation<>(
